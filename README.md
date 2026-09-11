@@ -2,13 +2,21 @@
 
 **Vended by Grok Build**
 
-![YOLO-dex List view](brand/screenshot-list.png)
+![YOLO-dex List view on LCOS](brand/screenshot-list.png)
 
 An **index-card stack** for The Lunduke Computer Operating System (LCOS). The window is Windows 3.x / 95 Cardfile, not a Markdown notebook.
 
 Binary: `yolodex`. Unlicense.
 
 LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLunduke/LCOS)
+
+![Card view](brand/screenshot-cards.png)
+
+![Find](brand/screenshot-find.png)
+
+![Appearance](brand/screenshot-options.png)
+
+![About](brand/screenshot-about.png)
 
 ## Status
 
