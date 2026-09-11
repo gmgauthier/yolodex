@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=YOLO-dex
+Comment=An index-card stack for The Lunduke Computer Operating System
+Exec=yolodex
+Icon=yolodex
+Terminal=false
+Hidden=false
+Categories=GTK;Office;Utility;
+MimeType=application/x-yolodex;
+StartupWMClass=yolodex
+StartupNotify=true

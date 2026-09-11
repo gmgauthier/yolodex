@@ -1,0 +1,47 @@
+/* YOLO-dex lcos skin — GTK3 CSS.
+ * Decorations stay with Clearlooks / Phenix. We only tint the client.
+ */
+
+window.yolodex-window {
+  background-color: #E6E6E1;
+}
+
+.yolodex-index-list,
+.yolodex-index-list text {
+  background-color: #FFFFFF;
+  color: #000000;
+  font-weight: bold;
+  padding: 0;
+  -GtkTreeView-horizontal-separator: 0;
+}
+
+treeview.yolodex-index-list {
+  -GtkTreeView-expander-size: 0;
+}
+
+.yolodex-card {
+  background-color: #F7F5EF;
+}
+
+.yolodex-card-index,
+.yolodex-card-index entry {
+  background-color: #E8E4D8;
+  color: #000000;
+  font-weight: bold;
+}
+
+.yolodex-card-body,
+.yolodex-card-body text {
+  background-color: #F7F5EF;
+  color: #1A1A1A;
+}
+
+.yolodex-card-body text selection,
+textview.yolodex-card-body text selection {
+  background-color: #3D6AA8;
+  color: #FFFFFF;
+}
+
+statusbar {
+  background-color: #D4D0C8;
+}

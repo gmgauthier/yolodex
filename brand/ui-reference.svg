@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1144" width="800" height="1144" role="img" aria-label="YOLO-dex List and Card views">
+  <defs>
+    <linearGradient id="titlebar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1660C4"/>
+      <stop offset="1" stop-color="#0B3A96"/>
+    </linearGradient>
+    <linearGradient id="selrow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7A9BC4"/>
+      <stop offset="1" stop-color="#5E84B0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ========== List view ========== -->
+  <rect width="800" height="560" fill="#D4D0C8"/>
+  <rect x="0.5" y="0.5" width="799" height="559" fill="none" stroke="#FFFFFF"/>
+  <rect x="2.5" y="2.5" width="795" height="555" fill="none" stroke="#808080"/>
+  <rect x="3.5" y="3.5" width="793" height="553" fill="none" stroke="#404040"/>
+  <rect x="5" y="5" width="790" height="22" fill="url(#titlebar)"/>
+  <rect x="10" y="8" width="16" height="16" rx="2.5" fill="#0B1D38"/>
+  <rect x="13" y="12" width="10" height="8" fill="#F7F5EF"/>
+  <rect x="13" y="12" width="10" height="3" fill="#E8E4D8"/>
+  <text x="32" y="20" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">YOLO-dex - recipes.yolodex</text>
+  <g font-family="Tahoma, Geneva, sans-serif" font-size="11" font-weight="700">
+    <rect x="722" y="8" width="18" height="16" fill="#D4D0C8" stroke="#FFFFFF"/>
+    <rect x="723" y="9" width="16" height="14" fill="none" stroke="#808080"/>
+    <text x="726" y="20" fill="#000">_</text>
+    <rect x="742" y="8" width="18" height="16" fill="#D4D0C8" stroke="#FFFFFF"/>
+    <rect x="743" y="9" width="16" height="14" fill="none" stroke="#808080"/>
+    <rect x="747" y="12" width="8" height="7" fill="none" stroke="#000" stroke-width="1.2"/>
+    <rect x="762" y="8" width="18" height="16" fill="#D4D0C8" stroke="#FFFFFF"/>
+    <rect x="763" y="9" width="16" height="14" fill="none" stroke="#808080"/>
+    <path d="M767 12 L775 20 M775 12 L767 20" stroke="#000" stroke-width="1.4"/>
+  </g>
+  <rect x="5" y="27" width="790" height="22" fill="#D4D0C8"/>
+  <g font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" fill="#000">
+    <text x="14" y="43">File</text>
+    <text x="52" y="43">Edit</text>
+    <text x="94" y="43">View</text>
+    <text x="140" y="43">Card</text>
+    <text x="186" y="43">Search</text>
+    <text x="246" y="43">Help</text>
+  </g>
+  <line x1="5" y1="49" x2="795" y2="49" stroke="#808080"/>
+  <line x1="5" y1="50" x2="795" y2="50" stroke="#FFFFFF"/>
+  <rect x="5" y="51" width="790" height="36" fill="#D4D0C8"/>
+  <g fill="#D4D0C8" stroke="#FFFFFF">
+    <rect x="10" y="56" width="48" height="26"/>
+    <rect x="62" y="56" width="60" height="26"/>
+    <rect x="138" y="56" width="48" height="26"/>
+    <rect x="190" y="56" width="52" height="26"/>
+    <rect x="680" y="56" width="48" height="26"/>
+    <rect x="732" y="56" width="52" height="26"/>
+  </g>
+  <g fill="none" stroke="#808080">
+    <rect x="11" y="57" width="46" height="24"/>
+    <rect x="63" y="57" width="58" height="24"/>
+    <rect x="139" y="57" width="46" height="24"/>
+    <rect x="191" y="57" width="50" height="24"/>
+    <rect x="681" y="57" width="46" height="24"/>
+    <rect x="733" y="57" width="50" height="24"/>
+  </g>
+  <g font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="11" fill="#000">
+    <text x="20" y="74">Add</text>
+    <text x="72" y="74">Delete</text>
+    <text x="148" y="74">Find</text>
+    <text x="200" y="74">Print</text>
+    <text x="690" y="74">List</text>
+    <text x="742" y="74">Card</text>
+  </g>
+  <rect x="8" y="92" width="220" height="428" fill="#FFFFFF"/>
+  <rect x="8" y="92" width="220" height="428" fill="none" stroke="#808080"/>
+  <rect x="9" y="93" width="218" height="426" fill="none" stroke="#404040"/>
+  <rect x="10" y="96" width="216" height="22" fill="url(#selrow)"/>
+  <g font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12">
+    <text x="18" y="112" fill="#FFFFFF" font-weight="700">Apple pie</text>
+    <text x="18" y="134" fill="#000">Baker</text>
+    <text x="18" y="156" fill="#000">Contacts</text>
+    <text x="18" y="178" fill="#000">Zoo hours</text>
+  </g>
+  <rect x="232" y="92" width="560" height="428" fill="#E6E6E1"/>
+  <rect x="244" y="104" width="536" height="404" fill="#F7F5EF" stroke="#808080"/>
+  <rect x="245" y="105" width="534" height="402" fill="none" stroke="#404040"/>
+  <rect x="244" y="104" width="536" height="28" fill="#E8E4D8" stroke="#808080"/>
+  <text x="256" y="123" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="13" font-weight="700" fill="#000">Apple pie</text>
+  <g font-family="Georgia, 'Times New Roman', serif" font-size="14" fill="#1A1A1A">
+    <text x="256" y="160">Preheat the oven to 375°F.</text>
+    <text x="256" y="180">Lattice the top. Egg wash.</text>
+    <text x="256" y="200">Bake until the juices bubble.</text>
+  </g>
+  <rect x="5" y="526" width="790" height="28" fill="#D4D0C8"/>
+  <line x1="5" y1="526" x2="795" y2="526" stroke="#808080"/>
+  <line x1="5" y1="527" x2="795" y2="527" stroke="#FFFFFF"/>
+  <text x="14" y="545" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" fill="#000">List — 4 cards</text>
+
+  <!-- ========== Card view ========== -->
+  <g transform="translate(0,584)">
+    <rect width="800" height="560" fill="#D4D0C8"/>
+    <rect x="0.5" y="0.5" width="799" height="559" fill="none" stroke="#FFFFFF"/>
+    <rect x="2.5" y="2.5" width="795" height="555" fill="none" stroke="#808080"/>
+    <rect x="3.5" y="3.5" width="793" height="553" fill="none" stroke="#404040"/>
+    <rect x="5" y="5" width="790" height="22" fill="url(#titlebar)"/>
+    <rect x="10" y="8" width="16" height="16" rx="2.5" fill="#0B1D38"/>
+    <rect x="13" y="12" width="10" height="8" fill="#F7F5EF"/>
+    <rect x="13" y="12" width="10" height="3" fill="#E8E4D8"/>
+    <text x="32" y="20" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">YOLO-dex - recipes.yolodex</text>
+    <g font-family="Tahoma, Geneva, sans-serif" font-size="11" font-weight="700">
+      <rect x="722" y="8" width="18" height="16" fill="#D4D0C8" stroke="#FFFFFF"/>
+      <rect x="723" y="9" width="16" height="14" fill="none" stroke="#808080"/>
+      <text x="726" y="20" fill="#000">_</text>
+      <rect x="742" y="8" width="18" height="16" fill="#D4D0C8" stroke="#FFFFFF"/>
+      <rect x="743" y="9" width="16" height="14" fill="none" stroke="#808080"/>
+      <rect x="747" y="12" width="8" height="7" fill="none" stroke="#000" stroke-width="1.2"/>
+      <rect x="762" y="8" width="18" height="16" fill="#D4D0C8" stroke="#FFFFFF"/>
+      <rect x="763" y="9" width="16" height="14" fill="none" stroke="#808080"/>
+      <path d="M767 12 L775 20 M775 12 L767 20" stroke="#000" stroke-width="1.4"/>
+    </g>
+    <rect x="5" y="27" width="790" height="22" fill="#D4D0C8"/>
+    <g font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" fill="#000">
+      <text x="14" y="43">File</text>
+      <text x="52" y="43">Edit</text>
+      <text x="94" y="43">View</text>
+      <text x="140" y="43">Card</text>
+      <text x="186" y="43">Search</text>
+      <text x="246" y="43">Help</text>
+    </g>
+    <line x1="5" y1="49" x2="795" y2="49" stroke="#808080"/>
+    <line x1="5" y1="50" x2="795" y2="50" stroke="#FFFFFF"/>
+    <rect x="5" y="51" width="790" height="36" fill="#D4D0C8"/>
+    <g fill="#D4D0C8" stroke="#FFFFFF">
+      <rect x="10" y="56" width="48" height="26"/>
+      <rect x="62" y="56" width="60" height="26"/>
+      <rect x="138" y="56" width="48" height="26"/>
+      <rect x="190" y="56" width="52" height="26"/>
+      <rect x="680" y="56" width="48" height="26"/>
+      <rect x="732" y="56" width="52" height="26"/>
+    </g>
+    <g fill="none" stroke="#808080">
+      <rect x="11" y="57" width="46" height="24"/>
+      <rect x="63" y="57" width="58" height="24"/>
+      <rect x="139" y="57" width="46" height="24"/>
+      <rect x="191" y="57" width="50" height="24"/>
+      <rect x="681" y="57" width="46" height="24"/>
+      <rect x="733" y="57" width="50" height="24"/>
+    </g>
+    <g font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="11" fill="#000">
+      <text x="20" y="74">Add</text>
+      <text x="72" y="74">Delete</text>
+      <text x="148" y="74">Find</text>
+      <text x="200" y="74">Print</text>
+      <text x="690" y="74">List</text>
+      <text x="742" y="74">Card</text>
+    </g>
+    <rect x="5" y="92" width="790" height="428" fill="#E6E6E1"/>
+    <rect x="120" y="110" width="560" height="22" fill="#E8E4D8" stroke="#808080"/>
+    <text x="132" y="126" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" font-weight="700" fill="#000">Apple pie</text>
+    <rect x="128" y="128" width="560" height="22" fill="#E8E4D8" stroke="#808080"/>
+    <text x="140" y="144" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" font-weight="700" fill="#000">Baker</text>
+    <rect x="136" y="146" width="560" height="22" fill="#E8E4D8" stroke="#808080"/>
+    <text x="148" y="162" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" font-weight="700" fill="#000">Contacts</text>
+    <rect x="144" y="164" width="560" height="320" fill="#F7F5EF" stroke="#808080"/>
+    <rect x="145" y="165" width="558" height="318" fill="none" stroke="#404040"/>
+    <rect x="144" y="164" width="560" height="28" fill="#E8E4D8"/>
+    <text x="156" y="183" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="13" font-weight="700" fill="#000">Zoo hours</text>
+    <g font-family="Georgia, 'Times New Roman', serif" font-size="14" fill="#1A1A1A">
+      <text x="156" y="220">Weekdays 9–5. Sunday noon–4.</text>
+      <text x="156" y="240">Closed Christmas Day.</text>
+    </g>
+    <rect x="5" y="526" width="790" height="28" fill="#D4D0C8"/>
+    <line x1="5" y1="526" x2="795" y2="526" stroke="#808080"/>
+    <line x1="5" y1="527" x2="795" y2="527" stroke="#FFFFFF"/>
+    <text x="14" y="545" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" fill="#000">Card — 4 of 4</text>
+  </g>
+</svg>
