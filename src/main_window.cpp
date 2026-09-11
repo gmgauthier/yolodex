@@ -97,13 +97,10 @@ void draw_print_card(const Cairo::RefPtr<Cairo::Context>& cr,
   cr->save();
   cr->rectangle(x, y, w, h);
   cr->clip();
-  cr->set_source_rgb(0.969, 0.961, 0.937);
+  cr->set_source_rgb(1.0, 1.0, 1.0);
   cr->rectangle(x, y, w, h);
   cr->fill();
-  cr->set_source_rgb(0.910, 0.894, 0.847);
-  cr->rectangle(x, y, w, header);
-  cr->fill();
-  cr->set_source_rgb(0.25, 0.25, 0.25);
+  cr->set_source_rgb(0.0, 0.0, 0.0);
   cr->set_line_width(1.0);
   cr->rectangle(x + 0.5, y + 0.5, w - 1.0, h - 1.0);
   cr->stroke();
