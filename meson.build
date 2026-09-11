@@ -12,6 +12,7 @@ project(
 )
 
 gtkmm = dependency('gtkmm-3.0')
+libxml = dependency('libxml-2.0')
 
 conf = configuration_data()
 conf.set_quoted('VERSION', meson.project_version())
@@ -34,8 +35,9 @@ executable(
   'src/main_window.cpp',
   'src/about_dialog.cpp',
   'src/card_face.cpp',
+  'src/stack.cpp',
   include_directories: inc,
-  dependencies: [gtkmm],
+  dependencies: [gtkmm, libxml],
   install: true,
   install_dir: get_option('bindir'),
 )

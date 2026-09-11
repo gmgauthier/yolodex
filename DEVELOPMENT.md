@@ -13,7 +13,7 @@ Address Book stays a later, separate app (columns + vCard). YOLO-dex is notes on
 
 ## Status (2026-09-11)
 
-**M0 in tree.** Window, menus, List layout, About, File → New (one unsaved blank card).
+**M1 in tree.** Window plus XML stack load/save, Add/Delete/Duplicate, dirty New/Open/Save/Save As. Sample `data/samples/recipes.yolodex`.
 
 ## 1. Locked decisions
 
@@ -100,7 +100,7 @@ No Autodial. No Merge in v1. No Picture / OLE.
 ```
 
 - `id` is a stable incrementing integer. Last-card restore keys on id, not the index text
-- Body is plain text. Pick a libxml2-clean newline policy in M1 and keep it
+- Body is plain text. Newlines are real line breaks inside `<body>`; `&`, `<`, and `>` are escaped. Custom writer (not libxml pretty-print) so indent does not leak into the body. Load with libxml2.
 - Pretty-print samples so they are grep-able
 - Not zip. Not JSON. Not a directory of notes
 
@@ -166,13 +166,13 @@ Win 3.1 Cardfile: 39-character index, 11×40 body (440 chars), 64K segment (~126
 
 v1.0 = M0–M6. Feature set of 0.1.x.
 
-### M0 — Window (this slice)
+### M0 — Window
 
 Scaffold. Meson, `Application` flock, `MainWindow`, menus, empty List layout, toolbar, About, `lcos.css`, `brand/ui-reference.svg`, `.desktop`. Status: `No stack open.` File → New shows one blank card in memory (unsaved). Add/Delete/Find/Print/Card view are stubs.
 
-### M1 — Stack file
+### M1 — Stack file (this slice)
 
-`Stack` XML load/save. Add / Delete / Duplicate. Index + body bind. Alpha sort. Dirty / New / Open / Save / Save As. Confirm discard if dirty. One sample stack under `data/samples/` (git-only, `export-ignore`).
+`Stack` XML load/save. Add / Delete / Duplicate. Index + body bind. Alpha sort. Dirty / New / Open / Save / Save As. Confirm discard if dirty. Sample `data/samples/recipes.yolodex` (git-only, `export-ignore`).
 
 ### M2 — Search + restore
 

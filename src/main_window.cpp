@@ -7,6 +7,7 @@
 
 #include <iostream>
 
+#include <glibmm/fileutils.h>
 #include <glibmm/miscutils.h>
 
 namespace yolodex {
@@ -84,18 +85,12 @@ void MainWindow::build_menu()
   auto* file = Gtk::manage(new Gtk::Menu());
   add_item(*file, "_New", sigc::mem_fun(*this, &MainWindow::on_new), GDK_KEY_n,
            Gdk::CONTROL_MASK);
-  add_item(*file, "_Open…",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Open")),
-           GDK_KEY_o, Gdk::CONTROL_MASK);
-  add_item(*file, "_Save",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Save")),
-           GDK_KEY_s, Gdk::CONTROL_MASK);
-  add_item(*file, "Save _As…",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Save As")),
-           GDK_KEY_s, Gdk::CONTROL_MASK | Gdk::SHIFT_MASK);
+  add_item(*file, "_Open…", sigc::mem_fun(*this, &MainWindow::on_open), GDK_KEY_o,
+           Gdk::CONTROL_MASK);
+  add_item(*file, "_Save", sigc::mem_fun(*this, &MainWindow::on_save), GDK_KEY_s,
+           Gdk::CONTROL_MASK);
+  add_item(*file, "Save _As…", sigc::mem_fun(*this, &MainWindow::on_save_as), GDK_KEY_s,
+           Gdk::CONTROL_MASK | Gdk::SHIFT_MASK);
   file->append(*Gtk::manage(new Gtk::SeparatorMenuItem()));
   add_item(*file, "_Print…",
            sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
@@ -138,18 +133,10 @@ void MainWindow::build_menu()
   add_menu("_View", *view);
 
   auto* card = Gtk::manage(new Gtk::Menu());
-  add_item(*card, "_Add",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Add")));
-  add_item(*card, "_Delete",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Delete")));
-  add_item(*card, "Du_plicate",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Duplicate")));
-  add_item(*card, "_Index…",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Index")));
+  add_item(*card, "_Add", sigc::mem_fun(*this, &MainWindow::on_card_add));
+  add_item(*card, "_Delete", sigc::mem_fun(*this, &MainWindow::on_delete_card));
+  add_item(*card, "Du_plicate", sigc::mem_fun(*this, &MainWindow::on_duplicate));
+  add_item(*card, "_Index…", sigc::mem_fun(*this, &MainWindow::on_index_dialog));
   add_menu("_Card", *card);
 
   auto* search = Gtk::manage(new Gtk::Menu());
@@ -177,10 +164,8 @@ void MainWindow::build_menu()
 void MainWindow::build_toolbar()
 {
   toolbar_.set_border_width(4);
-  btn_add_.signal_clicked().connect(
-      sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet), Glib::ustring("Add")));
-  btn_delete_.signal_clicked().connect(
-      sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet), Glib::ustring("Delete")));
+  btn_add_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_card_add));
+  btn_delete_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_delete_card));
   btn_find_.signal_clicked().connect(
       sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet), Glib::ustring("Find")));
   btn_print_.signal_clicked().connect(
@@ -202,18 +187,24 @@ void MainWindow::build_toolbar()
 void MainWindow::build_body()
 {
   list_cols_.add(col_index_);
+  list_cols_.add(col_id_);
   list_store_ = Gtk::ListStore::create(list_cols_);
   list_view_.set_model(list_store_);
   list_view_.set_headers_visible(false);
   list_view_.set_enable_search(false);
+  list_view_.get_selection()->set_mode(Gtk::SELECTION_SINGLE);
   list_view_.get_style_context()->add_class("yolodex-index-list");
   style_list_column();
+  list_view_.get_selection()->signal_changed().connect(
+      sigc::mem_fun(*this, &MainWindow::on_list_sel));
 
   list_scroll_.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
   list_scroll_.add(list_view_);
 
   card_face_.signal_index_changed().connect(
       sigc::mem_fun(*this, &MainWindow::on_index_changed));
+  card_face_.signal_body_changed().connect(
+      sigc::mem_fun(*this, &MainWindow::on_body_changed));
 
   paned_.pack1(list_scroll_, false, false);
   paned_.pack2(card_face_, true, false);
@@ -241,40 +232,287 @@ void MainWindow::set_status(const Glib::ustring& text)
 
 void MainWindow::update_title()
 {
-  if (!stack_open_) {
+  if (!stack_.is_open()) {
     set_title("YOLO-dex");
     return;
   }
-  set_title("YOLO-dex - Untitled");
+  Glib::ustring title = "YOLO-dex - ";
+  title += stack_.display_name();
+  if (stack_.dirty())
+    title += "*";
+  set_title(title);
+}
+
+void MainWindow::update_status()
+{
+  if (!stack_.is_open()) {
+    set_status("No stack open.");
+    return;
+  }
+  const int n = stack_.count();
+  Glib::ustring text = "List — ";
+  text += Glib::ustring::format(n);
+  text += n == 1 ? " card" : " cards";
+  if (stack_.dirty())
+    text += " · modified";
+  set_status(text);
 }
 
 void MainWindow::fill_list()
 {
+  suppress_list_ = true;
   list_store_->clear();
-  if (!stack_open_)
+  const int sel_id = stack_.selected_id();
+  Gtk::TreeModel::iterator sel_it;
+  for (const Card& c : stack_.cards()) {
+    auto it = list_store_->append();
+    Glib::ustring label = c.index;
+    if (label.empty())
+      label = "Untitled";
+    (*it)[col_index_] = label;
+    (*it)[col_id_] = c.id;
+    if (c.id == sel_id)
+      sel_it = it;
+  }
+  if (sel_it)
+    list_view_.get_selection()->select(sel_it);
+  else
+    list_view_.get_selection()->unselect_all();
+  suppress_list_ = false;
+}
+
+void MainWindow::bind_face()
+{
+  const Card* c = stack_.selected();
+  if (!c) {
+    card_face_.set_enabled(false);
     return;
-  auto row = *list_store_->append();
-  Glib::ustring label = draft_index_;
-  if (label.empty())
-    label = "Untitled";
-  row[col_index_] = label;
+  }
+  card_face_.set_enabled(true);
+  card_face_.set_index(c->index);
+  card_face_.set_body(c->body);
+}
+
+void MainWindow::flush_face()
+{
+  if (!stack_.selected())
+    return;
+  stack_.commit(card_face_.index(), card_face_.body());
+}
+
+void MainWindow::refresh()
+{
+  fill_list();
+  bind_face();
+  update_title();
+  update_status();
+}
+
+void MainWindow::show_error(const Glib::ustring& message)
+{
+  Gtk::MessageDialog dlg(*this, message, false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+  dlg.set_title("YOLO-dex");
+  dlg.run();
+}
+
+bool MainWindow::confirm_discard()
+{
+  flush_face();
+  if (!stack_.is_open() || !stack_.dirty())
+    return true;
+
+  Gtk::MessageDialog dlg(*this,
+                         "Save changes to " + stack_.display_name() + "?", false,
+                         Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_NONE, true);
+  dlg.set_title("YOLO-dex");
+  dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dlg.add_button("_Discard", Gtk::RESPONSE_REJECT);
+  dlg.add_button("_Save", Gtk::RESPONSE_ACCEPT);
+  dlg.set_default_response(Gtk::RESPONSE_ACCEPT);
+  const int resp = dlg.run();
+  if (resp == Gtk::RESPONSE_ACCEPT)
+    return do_save();
+  return resp == Gtk::RESPONSE_REJECT;
+}
+
+std::string MainWindow::ensure_suffix(const std::string& path) const
+{
+  const std::string suf = ".yolodex";
+  if (path.size() >= suf.size() &&
+      path.compare(path.size() - suf.size(), suf.size(), suf) == 0)
+    return path;
+  return path + suf;
+}
+
+std::string MainWindow::samples_dir() const
+{
+  const std::string p = std::string(SOURCE_ROOT) + "/data/samples";
+  if (Glib::file_test(p, Glib::FILE_TEST_IS_DIR))
+    return p;
+  return Glib::get_home_dir();
+}
+
+bool MainWindow::do_save()
+{
+  flush_face();
+  if (!stack_.is_open())
+    return true;
+  if (stack_.path().empty())
+    return do_save_as();
+  if (!stack_.save()) {
+    show_error(stack_.error().empty() ? "Could not save." : stack_.error());
+    return false;
+  }
+  update_title();
+  update_status();
+  return true;
+}
+
+bool MainWindow::do_save_as()
+{
+  flush_face();
+  if (!stack_.is_open())
+    return false;
+
+  Gtk::FileChooserDialog dlg(*this, "Save Stack", Gtk::FILE_CHOOSER_ACTION_SAVE);
+  dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dlg.add_button("_Save", Gtk::RESPONSE_ACCEPT);
+  dlg.set_do_overwrite_confirmation(true);
+  auto filter = Gtk::FileFilter::create();
+  filter->set_name("YOLO-dex stack");
+  filter->add_pattern("*.yolodex");
+  dlg.add_filter(filter);
+  auto all = Gtk::FileFilter::create();
+  all->set_name("All files");
+  all->add_pattern("*");
+  dlg.add_filter(all);
+  if (!stack_.path().empty()) {
+    dlg.set_filename(stack_.path());
+  } else {
+    dlg.set_current_folder(Glib::get_home_dir());
+    dlg.set_current_name("Untitled.yolodex");
+  }
+  if (dlg.run() != Gtk::RESPONSE_ACCEPT)
+    return false;
+  const std::string path = ensure_suffix(dlg.get_filename());
+  dlg.hide();
+  if (!stack_.save_as(path)) {
+    show_error(stack_.error().empty() ? "Could not save." : stack_.error());
+    return false;
+  }
+  update_title();
+  update_status();
+  return true;
 }
 
 void MainWindow::on_new()
 {
-  stack_open_ = true;
-  draft_index_.clear();
-  card_face_.set_enabled(true);
-  card_face_.set_index("");
-  card_face_.set_body("");
-  fill_list();
-  update_title();
-  set_status("Untitled — 1 card");
+  if (!confirm_discard())
+    return;
+  stack_.create_new();
+  refresh();
   card_face_.focus_index();
+}
+
+void MainWindow::on_open()
+{
+  if (!confirm_discard())
+    return;
+  Gtk::FileChooserDialog dlg(*this, "Open Stack", Gtk::FILE_CHOOSER_ACTION_OPEN);
+  dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dlg.add_button("_Open", Gtk::RESPONSE_ACCEPT);
+  auto filter = Gtk::FileFilter::create();
+  filter->set_name("YOLO-dex stack");
+  filter->add_pattern("*.yolodex");
+  dlg.add_filter(filter);
+  auto all = Gtk::FileFilter::create();
+  all->set_name("All files");
+  all->add_pattern("*");
+  dlg.add_filter(all);
+  dlg.set_current_folder(samples_dir());
+  if (dlg.run() != Gtk::RESPONSE_ACCEPT)
+    return;
+  const std::string path = dlg.get_filename();
+  dlg.hide();
+  if (!stack_.open(path)) {
+    show_error(stack_.error().empty() ? "Could not open stack." : stack_.error());
+    return;
+  }
+  refresh();
+}
+
+void MainWindow::on_save()
+{
+  if (!stack_.is_open())
+    return;
+  do_save();
+}
+
+void MainWindow::on_save_as()
+{
+  if (!stack_.is_open())
+    return;
+  do_save_as();
+}
+
+void MainWindow::on_card_add()
+{
+  if (!stack_.is_open()) {
+    on_new();
+    return;
+  }
+  flush_face();
+  stack_.add();
+  refresh();
+  card_face_.focus_index();
+}
+
+void MainWindow::on_delete_card()
+{
+  if (!stack_.selected())
+    return;
+  flush_face();
+  stack_.remove_selected();
+  refresh();
+}
+
+void MainWindow::on_duplicate()
+{
+  if (!stack_.selected())
+    return;
+  flush_face();
+  stack_.duplicate_selected();
+  refresh();
+  card_face_.focus_index();
+}
+
+void MainWindow::on_index_dialog()
+{
+  Card* c = stack_.selected();
+  if (!c)
+    return;
+  Gtk::Dialog dlg("Index", *this, true);
+  dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dlg.add_button("_OK", Gtk::RESPONSE_ACCEPT);
+  dlg.set_default_response(Gtk::RESPONSE_ACCEPT);
+  auto* box = dlg.get_content_area();
+  box->set_border_width(8);
+  auto* entry = Gtk::manage(new Gtk::Entry());
+  entry->set_text(card_face_.index());
+  entry->set_activates_default(true);
+  box->pack_start(*entry, Gtk::PACK_SHRINK);
+  dlg.show_all();
+  if (dlg.run() != Gtk::RESPONSE_ACCEPT)
+    return;
+  card_face_.set_index(entry->get_text());
+  flush_face();
+  refresh();
 }
 
 void MainWindow::on_quit()
 {
+  if (!confirm_discard())
+    return;
   hide();
 }
 
@@ -299,10 +537,39 @@ void MainWindow::on_view_card()
 
 void MainWindow::on_index_changed()
 {
-  if (!stack_open_)
+  if (!stack_.is_open())
     return;
-  draft_index_ = card_face_.index();
+  flush_face();
   fill_list();
+  update_title();
+  update_status();
+}
+
+void MainWindow::on_body_changed()
+{
+  if (!stack_.selected())
+    return;
+  stack_.commit(card_face_.index(), card_face_.body());
+  update_title();
+  update_status();
+}
+
+void MainWindow::on_list_sel()
+{
+  if (suppress_list_)
+    return;
+  auto it = list_view_.get_selection()->get_selected();
+  if (!it)
+    return;
+  const int new_id = (*it)[col_id_];
+  if (new_id == stack_.selected_id())
+    return;
+  flush_face();
+  stack_.select_id(new_id);
+  fill_list();
+  bind_face();
+  update_title();
+  update_status();
 }
 
 void MainWindow::on_not_yet(const Glib::ustring& feature)
@@ -319,7 +586,21 @@ bool MainWindow::on_key_press_event(GdkEventKey* event)
       on_view_list();
     return true;
   }
+  if (event && event->keyval == GDK_KEY_Delete) {
+    auto* focus = get_focus();
+    if (focus == &list_view_) {
+      on_delete_card();
+      return true;
+    }
+  }
   return Gtk::Window::on_key_press_event(event);
+}
+
+bool MainWindow::on_delete_event(GdkEventAny* event)
+{
+  if (!confirm_discard())
+    return true;
+  return Gtk::Window::on_delete_event(event);
 }
 
 }  // namespace yolodex

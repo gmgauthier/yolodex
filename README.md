@@ -10,7 +10,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**M0 in tree.** Window, menus, List layout, About. File → New shows one unsaved blank card. Open/Save/Find/Print and Card view come in later milestones.
+**M1 in tree.** Window plus a real `.yolodex` stack: New/Open/Save/Save As, Add/Delete/Duplicate, alpha sort, dirty confirm. Sample: `data/samples/recipes.yolodex`. Find/Print and Card view come later.
 
 | Doc | What |
 |---|---|
@@ -19,7 +19,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 ## Build
 
 ```
-sudo apt install build-essential meson ninja-build pkg-config g++ libgtkmm-3.0-dev
+sudo apt install build-essential meson ninja-build pkg-config g++ libgtkmm-3.0-dev libxml2-dev
 meson setup build
 meson compile -C build
 ./build/yolodex

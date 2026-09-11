@@ -3,6 +3,7 @@
 #pragma once
 
 #include "card_face.hpp"
+#include "stack.hpp"
 
 #include <gtkmm.h>
 
@@ -19,15 +20,34 @@ class MainWindow : public Gtk::Window {
   void load_css();
   void set_status(const Glib::ustring& text);
   void update_title();
+  void update_status();
   void fill_list();
+  void bind_face();
+  void flush_face();
+  void refresh();
   void style_list_column();
+  void show_error(const Glib::ustring& message);
+  bool confirm_discard();
+  bool do_save();
+  bool do_save_as();
+  std::string ensure_suffix(const std::string& path) const;
+  std::string samples_dir() const;
 
   void on_new();
+  void on_open();
+  void on_save();
+  void on_save_as();
+  void on_card_add();
+  void on_delete_card();
+  void on_duplicate();
+  void on_index_dialog();
   void on_quit();
   void on_about();
   void on_view_list();
   void on_view_card();
   void on_index_changed();
+  void on_body_changed();
+  void on_list_sel();
   void on_not_yet(const Glib::ustring& feature);
 
   Gtk::MenuItem* add_item(Gtk::Menu& menu, const Glib::ustring& label,
@@ -36,6 +56,7 @@ class MainWindow : public Gtk::Window {
 
  protected:
   bool on_key_press_event(GdkEventKey* event) override;
+  bool on_delete_event(GdkEventAny* event) override;
 
   Gtk::Box root_{Gtk::ORIENTATION_VERTICAL, 0};
   Gtk::MenuBar menubar_;
@@ -59,10 +80,11 @@ class MainWindow : public Gtk::Window {
 
   Glib::RefPtr<Gtk::ListStore> list_store_;
   Gtk::TreeModelColumn<Glib::ustring> col_index_;
+  Gtk::TreeModelColumn<int> col_id_;
   Gtk::TreeModelColumnRecord list_cols_;
 
-  bool stack_open_ = false;
-  Glib::ustring draft_index_;
+  Stack stack_;
+  bool suppress_list_ = false;
 };
 
 }  // namespace yolodex
