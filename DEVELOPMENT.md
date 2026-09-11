@@ -13,7 +13,7 @@ Address Book stays a later, separate app (columns + vCard). YOLO-dex is notes on
 
 ## Status (2026-09-11)
 
-**M3 in tree.** Print / Print All, Edit verbs, Restore snapshot, confirm Delete. Last-stack restore and Find from M2.
+**M4 in tree.** Stacked Card view (Cairo index tabs + the same card face). View is remembered in the ini.
 
 ## 1. Locked decisions
 
@@ -186,16 +186,16 @@ Find / Find Next (case-insensitive, index then body, wrap the stack). Go To pref
 | Ctrl+F / F3 | Find / Find Next |
 | Ctrl+G | Go To |
 | Ctrl+P | Print |
-| F5 / Shift+F5 | List / Card (Card no-op until M4) |
+| F5 / Shift+F5 | List / Card |
 | Alt+← / Alt+→ | Prev / Next card |
 
 Restore last file + last card id from `~/.config/yolodex/yolodex.ini`. If cheap, also save body scroll on the selected card.
 
-### M3 — Print + List polish (this slice)
+### M3 — Print + List polish
 
 Print / Print All. Card-face chrome. Cut/Copy/Paste/Undo via the TextView buffer. `Card → Restore` = revert current card to last saved snapshot. Confirm Delete. (List hover/left-pin landed with M1.)
 
-### M4 — Card view
+### M4 — Card view (this slice)
 
 `View → Card`: hide the list, show Cairo tab cascade + the same `CardFace`. Click tab to select. Wheel / PgUp / PgDn walk. Remember view in ini. List view remains the editing workhorse.
 

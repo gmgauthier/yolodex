@@ -3,6 +3,7 @@
 #pragma once
 
 #include "card_face.hpp"
+#include "card_view.hpp"
 #include "find_dialog.hpp"
 #include "settings.hpp"
 #include "stack.hpp"
@@ -71,6 +72,7 @@ class MainWindow : public Gtk::Window {
   void on_index_dialog();
   void on_quit();
   void on_about();
+  void set_view(bool card);
   void on_view_list();
   void on_view_card();
   void on_index_changed();
@@ -103,6 +105,8 @@ class MainWindow : public Gtk::Window {
   Gtk::RadioMenuItem* view_list_item_ = nullptr;
   Gtk::RadioMenuItem* view_card_item_ = nullptr;
   Glib::RefPtr<Gtk::AccelGroup> accel_;
+  Gtk::Box work_{Gtk::ORIENTATION_VERTICAL, 0};
+  CardView card_tabs_;
   Gtk::Paned paned_{Gtk::ORIENTATION_HORIZONTAL};
   Gtk::ScrolledWindow list_scroll_;
   Gtk::TreeView list_view_;
@@ -125,6 +129,8 @@ class MainWindow : public Gtk::Window {
   bool last_hit_in_index_ = false;
   int last_hit_offset_ = 0;
   int last_hit_length_ = 0;
+  bool in_card_view_ = false;
+  bool suppress_view_ = false;
 };
 
 }  // namespace yolodex

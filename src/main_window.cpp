@@ -172,6 +172,8 @@ MainWindow::MainWindow()
   show_all();
   signal_hide().connect(sigc::mem_fun(*this, &MainWindow::persist));
   restore_session();
+  if (settings_.view == "card")
+    set_view(true);
 }
 
 void MainWindow::load_css()
@@ -341,11 +343,19 @@ void MainWindow::build_body()
   card_face_.signal_body_changed().connect(
       sigc::mem_fun(*this, &MainWindow::on_body_changed));
 
+  card_tabs_.set_no_show_all(true);
+  card_tabs_.hide();
+  card_tabs_.signal_card_chosen().connect(
+      sigc::mem_fun(*this, &MainWindow::select_card_id));
+  card_tabs_.signal_step().connect(sigc::mem_fun(*this, &MainWindow::step_card));
+
   paned_.pack1(list_scroll_, false, false);
   paned_.pack2(card_face_, true, false);
   paned_.set_position(220);
 
-  root_.pack_start(paned_, Gtk::PACK_EXPAND_WIDGET);
+  work_.pack_start(card_tabs_, Gtk::PACK_SHRINK);
+  work_.pack_start(paned_, Gtk::PACK_EXPAND_WIDGET);
+  root_.pack_start(work_, Gtk::PACK_EXPAND_WIDGET);
   root_.pack_start(status_, Gtk::PACK_SHRINK);
 }
 
@@ -466,9 +476,18 @@ void MainWindow::update_status()
     return;
   }
   const int n = stack_.count();
-  Glib::ustring text = "List — ";
-  text += Glib::ustring::format(n);
-  text += n == 1 ? " card" : " cards";
+  Glib::ustring text;
+  if (in_card_view_) {
+    const int i = stack_.selected_row();
+    text = "Card — ";
+    text += Glib::ustring::format(i >= 0 ? i + 1 : 0);
+    text += " of ";
+    text += Glib::ustring::format(n);
+  } else {
+    text = "List — ";
+    text += Glib::ustring::format(n);
+    text += n == 1 ? " card" : " cards";
+  }
   if (stack_.dirty())
     text += " · modified";
   set_status(text);
@@ -494,6 +513,8 @@ void MainWindow::fill_list()
   if (list_current_path_.size() > 0)
     scroll_nav_vertically(list_current_path_);
   list_view_.queue_draw();
+  if (in_card_view_)
+    card_tabs_.bind(stack_);
 }
 
 void MainWindow::sync_list_current()
@@ -796,7 +817,7 @@ void MainWindow::persist()
     settings_.last_id = -1;
     settings_.last_scroll = 0;
   }
-  settings_.view = "list";
+  settings_.view = in_card_view_ ? "card" : "list";
   settings_.save();
 }
 
@@ -995,17 +1016,59 @@ void MainWindow::on_about()
   dlg.run();
 }
 
+void MainWindow::set_view(bool card)
+{
+  if (suppress_view_)
+    return;
+  if (in_card_view_ == card) {
+    suppress_view_ = true;
+    if (card && view_card_item_)
+      view_card_item_->set_active(true);
+    else if (!card && view_list_item_)
+      view_list_item_->set_active(true);
+    suppress_view_ = false;
+    return;
+  }
+  if (!card && in_card_view_) {
+    /* keep last list splitter */
+  } else if (card && !in_card_view_) {
+    const int p = paned_.get_position();
+    if (p > 40)
+      settings_.paned = p;
+  }
+  in_card_view_ = card;
+  if (card) {
+    list_scroll_.hide();
+    card_tabs_.bind(stack_);
+    card_tabs_.show();
+  } else {
+    card_tabs_.hide();
+    list_scroll_.show();
+    if (settings_.paned > 40)
+      paned_.set_position(settings_.paned);
+    relayout_nav();
+  }
+  suppress_view_ = true;
+  if (card && view_card_item_)
+    view_card_item_->set_active(true);
+  else if (!card && view_list_item_)
+    view_list_item_->set_active(true);
+  suppress_view_ = false;
+  update_status();
+}
+
 void MainWindow::on_view_list()
 {
-  if (view_list_item_ && !view_list_item_->get_active())
-    view_list_item_->set_active(true);
+  if (suppress_view_)
+    return;
+  set_view(false);
 }
 
 void MainWindow::on_view_card()
 {
-  on_not_yet("Card view");
-  if (view_list_item_)
-    view_list_item_->set_active(true);
+  if (suppress_view_)
+    return;
+  set_view(true);
 }
 
 void MainWindow::on_index_changed()
@@ -1265,6 +1328,16 @@ bool MainWindow::on_key_press_event(GdkEventKey* event)
   }
   if ((event->keyval == GDK_KEY_Right || event->keyval == GDK_KEY_KP_Right) &&
       mods == Gdk::MOD1_MASK) {
+    step_card(1);
+    return true;
+  }
+  if (in_card_view_ && !in_editable_focus() &&
+      (event->keyval == GDK_KEY_Page_Up || event->keyval == GDK_KEY_KP_Page_Up)) {
+    step_card(-1);
+    return true;
+  }
+  if (in_card_view_ && !in_editable_focus() &&
+      (event->keyval == GDK_KEY_Page_Down || event->keyval == GDK_KEY_KP_Page_Down)) {
     step_card(1);
     return true;
   }

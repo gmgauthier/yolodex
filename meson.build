@@ -35,6 +35,7 @@ executable(
   'src/main_window.cpp',
   'src/about_dialog.cpp',
   'src/card_face.cpp',
+  'src/card_view.cpp',
   'src/stack.cpp',
   'src/settings.cpp',
   'src/find_dialog.cpp',

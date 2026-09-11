@@ -10,7 +10,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**M3 in tree.** Find/Go To/restore last stack, plus Print / Print All, Edit Cut/Copy/Paste/Undo, Card Restore, and confirm Delete. Card view comes later.
+**M4 in tree.** List view plus stacked **Card** view (View → Card / Shift+F5). Find, print, and last-stack restore are in. Packaging is M6.
 
 | Doc | What |
 |---|---|
