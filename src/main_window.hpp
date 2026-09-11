@@ -25,7 +25,13 @@ class MainWindow : public Gtk::Window {
   void bind_face();
   void flush_face();
   void refresh();
+  void select_card_id(int id);
+  void sync_list_current();
   void style_list_column();
+  void snap_nav_left();
+  void keep_nav_left();
+  void scroll_nav_vertically(const Gtk::TreeModel::Path& path);
+  void relayout_nav();
   void show_error(const Glib::ustring& message);
   bool confirm_discard();
   bool do_save();
@@ -47,7 +53,11 @@ class MainWindow : public Gtk::Window {
   void on_view_card();
   void on_index_changed();
   void on_body_changed();
-  void on_list_sel();
+  void on_list_cell_data(Gtk::CellRenderer* cell, const Gtk::TreeModel::const_iterator& it);
+  bool on_list_motion(GdkEventMotion* event);
+  bool on_list_leave(GdkEventCrossing* event);
+  bool on_list_button(GdkEventButton* event);
+  bool on_list_key(GdkEventKey* event);
   void on_not_yet(const Glib::ustring& feature);
 
   Gtk::MenuItem* add_item(Gtk::Menu& menu, const Glib::ustring& label,
@@ -84,7 +94,8 @@ class MainWindow : public Gtk::Window {
   Gtk::TreeModelColumnRecord list_cols_;
 
   Stack stack_;
-  bool suppress_list_ = false;
+  Gtk::TreeModel::Path list_hover_path_;
+  Gtk::TreeModel::Path list_current_path_;
 };
 
 }  // namespace yolodex

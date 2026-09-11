@@ -6,8 +6,7 @@ window.yolodex-window {
   background-color: #E6E6E1;
 }
 
-.yolodex-index-list,
-.yolodex-index-list text {
+.yolodex-index-list {
   background-color: #FFFFFF;
   color: #000000;
   font-weight: bold;
@@ -17,6 +16,8 @@ window.yolodex-window {
 
 treeview.yolodex-index-list {
   -GtkTreeView-expander-size: 0;
+  -GtkTreeView-horizontal-separator: 0;
+  padding: 0;
 }
 
 .yolodex-card {

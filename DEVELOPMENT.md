@@ -147,9 +147,9 @@ CSS: beige card (`#F7F5EF`), index strip `#E8E4D8`, Clearlooks-proof selection `
 
 In-memory vector, **kept sorted** by index (`ustring.casefold()`). Re-sort when the index Entry commits. Do not re-sort on every keystroke. Dirty flag. Title: `YOLO-dex - filename.yolodex` with `*` when dirty.
 
-### List hover (M3)
+### List hover / left pin (from Read-O-Matic Contents)
 
-Clearlooks ignores treeview CSS. Same trick as Read-O-Matic Contents: `SELECTION_NONE` + cell-data hover `#C4C4BC`, sticky current row. `POLICY_NEVER` on H-scroll, ellipsize, do not `scroll_to_row` horizontally, snap hadjustment to lower.
+Clearlooks ignores treeview CSS. Same trick: `SELECTION_NONE` + cell-data hover/sticky `#C4C4BC`. `POLICY_NEVER` on H-scroll, ellipsize, xalign 0, do not `set_cursor` / `scroll_to_row` horizontally, snap hadjustment to lower (`keep_nav_left`, capture pointers).
 
 ## 5. Original limits we will not clone
 
@@ -193,7 +193,7 @@ Restore last file + last card id from `~/.config/yolodex/yolodex.ini`. If cheap,
 
 ### M3 — Print + List polish
 
-Print / Print All. Card-face chrome. List hover/sticky. Cut/Copy/Paste/Undo via the TextView buffer. `Card → Restore` = revert current card to last saved snapshot. Confirm Delete.
+Print / Print All. Card-face chrome. Cut/Copy/Paste/Undo via the TextView buffer. `Card → Restore` = revert current card to last saved snapshot. Confirm Delete. (List hover/left-pin landed with M1.)
 
 ### M4 — Card view
 

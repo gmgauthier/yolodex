@@ -21,6 +21,53 @@ Gtk::Separator* toolbar_sep()
   return sep;
 }
 
+void paint_nav_cell(Gtk::CellRenderer* cell,
+                    const Gtk::TreeModel::Path& path,
+                    const Gtk::TreeModel::Path& current,
+                    const Gtk::TreeModel::Path& hover)
+{
+  if (!cell)
+    return;
+  const bool on = (current.size() > 0 && path.size() > 0 && path == current) ||
+                  (hover.size() > 0 && path.size() > 0 && path == hover);
+  if (on) {
+    cell->property_cell_background() = "#C4C4BC";
+    cell->property_cell_background_set() = true;
+  } else {
+    cell->property_cell_background_set() = false;
+  }
+}
+
+bool nav_motion(Gtk::TreeView& view, Gtk::TreeModel::Path& hover, GdkEventMotion* event)
+{
+  Gtk::TreeModel::Path path;
+  Gtk::TreeViewColumn* col = nullptr;
+  int cx = 0, cy = 0, bx = 0, by = 0;
+  view.convert_widget_to_bin_window_coords(static_cast<int>(event->x),
+                                           static_cast<int>(event->y), bx, by);
+  if (view.get_path_at_pos(bx, by, path, col, cx, cy) && path.size() > 0) {
+    if (hover.size() == 0 || hover != path) {
+      hover = path;
+      view.queue_draw();
+    }
+  } else if (hover.size() > 0) {
+    hover.clear();
+    view.queue_draw();
+  }
+  return false;
+}
+
+bool nav_leave(Gtk::TreeView& view, Gtk::TreeModel::Path& hover, GdkEventCrossing* event)
+{
+  if (event && event->detail == GDK_NOTIFY_INFERIOR)
+    return false;
+  if (hover.size() > 0) {
+    hover.clear();
+    view.queue_draw();
+  }
+  return false;
+}
+
 }  // namespace
 
 MainWindow::MainWindow()
@@ -190,16 +237,38 @@ void MainWindow::build_body()
   list_cols_.add(col_id_);
   list_store_ = Gtk::ListStore::create(list_cols_);
   list_view_.set_model(list_store_);
+  list_view_.append_column("", col_index_);
   list_view_.set_headers_visible(false);
+  list_view_.set_show_expanders(false);
   list_view_.set_enable_search(false);
-  list_view_.get_selection()->set_mode(Gtk::SELECTION_SINGLE);
+  list_view_.get_selection()->set_mode(Gtk::SELECTION_NONE);
+  list_view_.set_can_focus(true);
   list_view_.get_style_context()->add_class("yolodex-index-list");
   style_list_column();
-  list_view_.get_selection()->signal_changed().connect(
-      sigc::mem_fun(*this, &MainWindow::on_list_sel));
+  if (auto* col = list_view_.get_column(0)) {
+    const auto cells = col->get_cells();
+    if (!cells.empty()) {
+      if (auto* text = dynamic_cast<Gtk::CellRendererText*>(cells[0])) {
+        text->property_weight() = Pango::WEIGHT_BOLD;
+        col->set_cell_data_func(*text, sigc::mem_fun(*this, &MainWindow::on_list_cell_data));
+      }
+    }
+  }
+  list_view_.add_events(Gdk::POINTER_MOTION_MASK | Gdk::LEAVE_NOTIFY_MASK |
+                        Gdk::BUTTON_PRESS_MASK);
+  list_view_.signal_motion_notify_event().connect(
+      sigc::mem_fun(*this, &MainWindow::on_list_motion), false);
+  list_view_.signal_leave_notify_event().connect(
+      sigc::mem_fun(*this, &MainWindow::on_list_leave), false);
+  list_view_.signal_button_press_event().connect(
+      sigc::mem_fun(*this, &MainWindow::on_list_button), false);
+  list_view_.signal_key_press_event().connect(
+      sigc::mem_fun(*this, &MainWindow::on_list_key), false);
 
   list_scroll_.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+  list_scroll_.set_margin_start(4);
   list_scroll_.add(list_view_);
+  keep_nav_left();
 
   card_face_.signal_index_changed().connect(
       sigc::mem_fun(*this, &MainWindow::on_index_changed));
@@ -216,12 +285,93 @@ void MainWindow::build_body()
 
 void MainWindow::style_list_column()
 {
-  auto* cell = Gtk::manage(new Gtk::CellRendererText());
-  cell->property_ellipsize() = Pango::ELLIPSIZE_END;
-  auto* col = Gtk::manage(new Gtk::TreeViewColumn("", *cell));
-  col->add_attribute(cell->property_text(), col_index_);
-  col->set_expand(true);
-  list_view_.append_column(*col);
+  list_view_.set_hscroll_policy(Gtk::SCROLL_MINIMUM);
+  list_view_.set_level_indentation(0);
+  if (auto* col = list_view_.get_column(0)) {
+    col->set_sizing(Gtk::TREE_VIEW_COLUMN_FIXED);
+    col->set_expand(true);
+    const auto cells = col->get_cells();
+    if (!cells.empty()) {
+      if (auto* text = dynamic_cast<Gtk::CellRendererText*>(cells[0])) {
+        text->property_ellipsize() = Pango::ELLIPSIZE_END;
+        text->property_xalign() = 0.0;
+        text->property_xpad() = 6;
+      }
+    }
+  }
+}
+
+void MainWindow::snap_nav_left()
+{
+  auto snap = [](const Glib::RefPtr<Gtk::Adjustment>& adj) {
+    if (!adj)
+      return;
+    const double lo = adj->get_lower();
+    if (adj->get_value() != lo)
+      adj->set_value(lo);
+  };
+  snap(list_scroll_.get_hadjustment());
+  snap(list_view_.get_hadjustment());
+}
+
+void MainWindow::keep_nav_left()
+{
+  auto* v = &list_view_;
+  auto* s = &list_scroll_;
+  auto hook = [this, v, s]() {
+    snap_nav_left();
+    auto attach = [this, v, s](const Glib::RefPtr<Gtk::Adjustment>& adj) {
+      if (!adj)
+        return;
+      adj->signal_value_changed().connect([this, v, s]() { snap_nav_left(); });
+    };
+    attach(s->get_hadjustment());
+    attach(v->get_hadjustment());
+  };
+  if (list_view_.get_realized())
+    hook();
+  list_view_.signal_realize().connect(hook);
+  list_view_.signal_map().connect([this, v, s]() {
+    snap_nav_left();
+    Glib::signal_idle().connect(
+        [this, v, s]() {
+          snap_nav_left();
+          v->queue_resize();
+          return false;
+        },
+        Glib::PRIORITY_LOW);
+  });
+  list_view_.signal_size_allocate().connect(
+      [this, v, s](Gtk::Allocation&) { snap_nav_left(); });
+  list_view_.signal_cursor_changed().connect([this, v, s]() { snap_nav_left(); });
+  list_scroll_.property_hadjustment().signal_changed().connect([hook]() { hook(); });
+}
+
+void MainWindow::scroll_nav_vertically(const Gtk::TreeModel::Path& path)
+{
+  auto* col = list_view_.get_column(0);
+  if (!col || path.empty())
+    return;
+  Gdk::Rectangle cell;
+  list_view_.get_background_area(path, *col, cell);
+  auto v = list_view_.get_vadjustment();
+  if (!v)
+    return;
+  const double top = cell.get_y();
+  const double bottom = top + cell.get_height();
+  const double vis_top = v->get_value();
+  const double vis_bot = vis_top + v->get_page_size();
+  if (top < vis_top)
+    v->set_value(top);
+  else if (bottom > vis_bot)
+    v->set_value(bottom - v->get_page_size());
+}
+
+void MainWindow::relayout_nav()
+{
+  list_view_.queue_resize();
+  list_scroll_.queue_resize();
+  snap_nav_left();
 }
 
 void MainWindow::set_status(const Glib::ustring& text)
@@ -260,10 +410,10 @@ void MainWindow::update_status()
 
 void MainWindow::fill_list()
 {
-  suppress_list_ = true;
+  list_hover_path_.clear();
+  list_current_path_.clear();
   list_store_->clear();
   const int sel_id = stack_.selected_id();
-  Gtk::TreeModel::iterator sel_it;
   for (const Card& c : stack_.cards()) {
     auto it = list_store_->append();
     Glib::ustring label = c.index;
@@ -272,13 +422,44 @@ void MainWindow::fill_list()
     (*it)[col_index_] = label;
     (*it)[col_id_] = c.id;
     if (c.id == sel_id)
-      sel_it = it;
+      list_current_path_ = list_store_->get_path(it);
   }
-  if (sel_it)
-    list_view_.get_selection()->select(sel_it);
-  else
-    list_view_.get_selection()->unselect_all();
-  suppress_list_ = false;
+  relayout_nav();
+  if (list_current_path_.size() > 0)
+    scroll_nav_vertically(list_current_path_);
+  list_view_.queue_draw();
+}
+
+void MainWindow::sync_list_current()
+{
+  list_current_path_.clear();
+  const int sel_id = stack_.selected_id();
+  for (auto& row : list_store_->children()) {
+    if (row.get_value(col_id_) == sel_id) {
+      list_current_path_ = list_store_->get_path(row);
+      break;
+    }
+  }
+  if (list_current_path_.size() > 0)
+    scroll_nav_vertically(list_current_path_);
+  snap_nav_left();
+  list_view_.queue_draw();
+}
+
+void MainWindow::select_card_id(int id)
+{
+  if (id < 1)
+    return;
+  if (id != stack_.selected_id()) {
+    flush_face();
+    stack_.select_id(id);
+    fill_list();
+    bind_face();
+    update_title();
+    update_status();
+    return;
+  }
+  sync_list_current();
 }
 
 void MainWindow::bind_face()
@@ -554,22 +735,80 @@ void MainWindow::on_body_changed()
   update_status();
 }
 
-void MainWindow::on_list_sel()
+void MainWindow::on_list_cell_data(Gtk::CellRenderer* cell,
+                                   const Gtk::TreeModel::const_iterator& it)
 {
-  if (suppress_list_)
-    return;
-  auto it = list_view_.get_selection()->get_selected();
   if (!it)
     return;
-  const int new_id = (*it)[col_id_];
-  if (new_id == stack_.selected_id())
-    return;
-  flush_face();
-  stack_.select_id(new_id);
-  fill_list();
-  bind_face();
-  update_title();
-  update_status();
+  paint_nav_cell(cell, list_store_->get_path(it), list_current_path_, list_hover_path_);
+}
+
+bool MainWindow::on_list_motion(GdkEventMotion* event)
+{
+  return nav_motion(list_view_, list_hover_path_, event);
+}
+
+bool MainWindow::on_list_leave(GdkEventCrossing* event)
+{
+  return nav_leave(list_view_, list_hover_path_, event);
+}
+
+bool MainWindow::on_list_button(GdkEventButton* event)
+{
+  if (!event || event->button != 1 || event->type != GDK_BUTTON_PRESS)
+    return false;
+  Gtk::TreeModel::Path path;
+  Gtk::TreeViewColumn* col = nullptr;
+  int cx = 0, cy = 0, bx = 0, by = 0;
+  list_view_.convert_widget_to_bin_window_coords(static_cast<int>(event->x),
+                                                 static_cast<int>(event->y), bx, by);
+  if (!list_view_.get_path_at_pos(bx, by, path, col, cx, cy) || path.size() == 0)
+    return false;
+  auto it = list_store_->get_iter(path);
+  if (!it)
+    return false;
+  select_card_id((*it)[col_id_]);
+  list_view_.grab_focus();
+  return true;
+}
+
+bool MainWindow::on_list_key(GdkEventKey* event)
+{
+  if (!event)
+    return false;
+  if (event->keyval == GDK_KEY_Up || event->keyval == GDK_KEY_KP_Up) {
+    flush_face();
+    const int row = stack_.selected_row();
+    if (row > 0) {
+      stack_.select_row(row - 1);
+      fill_list();
+      bind_face();
+      update_title();
+      update_status();
+    } else {
+      fill_list();
+    }
+    return true;
+  }
+  if (event->keyval == GDK_KEY_Down || event->keyval == GDK_KEY_KP_Down) {
+    flush_face();
+    const int row = stack_.selected_row();
+    if (row >= 0 && row + 1 < stack_.count()) {
+      stack_.select_row(row + 1);
+      fill_list();
+      bind_face();
+      update_title();
+      update_status();
+    } else {
+      fill_list();
+    }
+    return true;
+  }
+  if (event->keyval == GDK_KEY_Delete) {
+    on_delete_card();
+    return true;
+  }
+  return false;
 }
 
 void MainWindow::on_not_yet(const Glib::ustring& feature)
