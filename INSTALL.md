@@ -6,7 +6,7 @@ Four ways to get a binary, in the order LCOS cares about:
 |---|---|
 | **`.deb`** | LCOS, Devuan Excalibur, Debian Trixie. Preferred. |
 | **Source tarball** | Distro packagers and `meson setup && ninja install`. |
-| **AppImage** | Fallback when you cannot install packages. gtkmm only. |
+| **AppImage** | Fallback for distros that do not install `.deb` files. gtkmm only. Published on the GitHub/Gitea release. |
 | **Git build** | Developers. See below. |
 
 Version comes from `meson.build` (currently `0.1.0`).
@@ -101,7 +101,7 @@ The binary finds CSS via `SOURCE_ROOT` in the build tree. `YOLODEX_DATA` overrid
 ./scripts/release.sh all
 ```
 
-Writes tarball, `.deb`, and AppImage (if `linuxdeploy` is there) under `dist/`. AppImage is not a release gate.
+Writes tarball, `.deb`, and AppImage (if `linuxdeploy` is there) under `dist/`. The GitHub/Gitea release includes the AppImage as the non-deb fallback.
 
 ## What this project will not ship
 

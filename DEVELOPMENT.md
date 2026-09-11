@@ -205,7 +205,7 @@ Status `List — n cards` / `Card — i of n` already shipped. Options → Appea
 
 ### M6 — Package (this slice)
 
-`debian/` native 3.0 Meson dh, `scripts/release.sh` (tarball + `.deb`; AppImage if linuxdeploy is there — do not block the release on AppImage). `INSTALL.md`. LCOS VM screenshots in README. Tag `v0.1.0`. Push origin + github. Attach `.deb` + tarball.
+`debian/` native 3.0 Meson dh, `scripts/release.sh` (tarball + `.deb` + AppImage). AppImage is the published fallback for distros that do not install `.deb`. `INSTALL.md`. LCOS VM screenshots in README. Tag `v0.1.0`. Push origin + github. Attach `.deb`, tarball, and AppImage.
 
 ## 8. Parked (not v1)
 
