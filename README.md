@@ -10,7 +10,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**M1 in tree.** Window plus a real `.yolodex` stack: New/Open/Save/Save As, Add/Delete/Duplicate, alpha sort, dirty confirm. Sample: `data/samples/recipes.yolodex`. Find/Print and Card view come later.
+**M2 in tree.** Stack file plus Find / Find Next / Go To, prev/next card, and restore last stack + card from `~/.config/yolodex/yolodex.ini`. Sample: `data/samples/recipes.yolodex`. Print and Card view come later.
 
 | Doc | What |
 |---|---|

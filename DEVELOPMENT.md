@@ -13,7 +13,7 @@ Address Book stays a later, separate app (columns + vCard). YOLO-dex is notes on
 
 ## Status (2026-09-11)
 
-**M1 in tree.** Window plus XML stack load/save, Add/Delete/Duplicate, dirty New/Open/Save/Save As. Sample `data/samples/recipes.yolodex`.
+**M2 in tree.** Find / Find Next / Go To, prev/next, last-stack restore in `~/.config/yolodex/yolodex.ini`.
 
 ## 1. Locked decisions
 
@@ -170,11 +170,11 @@ v1.0 = M0–M6. Feature set of 0.1.x.
 
 Scaffold. Meson, `Application` flock, `MainWindow`, menus, empty List layout, toolbar, About, `lcos.css`, `brand/ui-reference.svg`, `.desktop`. Status: `No stack open.` File → New shows one blank card in memory (unsaved). Add/Delete/Find/Print/Card view are stubs.
 
-### M1 — Stack file (this slice)
+### M1 — Stack file
 
 `Stack` XML load/save. Add / Delete / Duplicate. Index + body bind. Alpha sort. Dirty / New / Open / Save / Save As. Confirm discard if dirty. Sample `data/samples/recipes.yolodex` (git-only, `export-ignore`).
 
-### M2 — Search + restore
+### M2 — Search + restore (this slice)
 
 Find / Find Next (case-insensitive, index then body, wrap the stack). Go To prefix dialog. Prev/Next. Keys:
 

@@ -68,12 +68,31 @@ bool nav_leave(Gtk::TreeView& view, Gtk::TreeModel::Path& hover, GdkEventCrossin
   return false;
 }
 
+bool u_find(const Glib::ustring& hay, const Glib::ustring& needle, int from, int& out)
+{
+  if (needle.empty())
+    return false;
+  const Glib::ustring h = hay.casefold();
+  const Glib::ustring n = needle.casefold();
+  if (from < 0)
+    from = 0;
+  if (static_cast<Glib::ustring::size_type>(from) > h.size())
+    return false;
+  const auto pos = h.find(n, static_cast<Glib::ustring::size_type>(from));
+  if (pos == Glib::ustring::npos)
+    return false;
+  out = static_cast<int>(pos);
+  return true;
+}
+
 }  // namespace
 
 MainWindow::MainWindow()
 {
+  settings_.load();
   set_title("YOLO-dex");
-  set_default_size(720, 480);
+  set_default_size(settings_.window_w > 0 ? settings_.window_w : 720,
+                   settings_.window_h > 0 ? settings_.window_h : 480);
   set_border_width(0);
   get_style_context()->add_class("yolodex-window");
 
@@ -85,11 +104,20 @@ MainWindow::MainWindow()
   build_toolbar();
   build_body();
 
+  if (settings_.window_w > 0 && settings_.window_h > 0)
+    resize(settings_.window_w, settings_.window_h);
+  if (settings_.window_x >= 0 && settings_.window_y >= 0)
+    move(settings_.window_x, settings_.window_y);
+  if (settings_.paned > 40)
+    paned_.set_position(settings_.paned);
+
   status_ctx_ = status_.get_context_id("main");
   set_status("No stack open.");
 
   add(root_);
   show_all();
+  signal_hide().connect(sigc::mem_fun(*this, &MainWindow::persist));
+  restore_session();
 }
 
 void MainWindow::load_css()
@@ -184,20 +212,19 @@ void MainWindow::build_menu()
   add_item(*card, "_Delete", sigc::mem_fun(*this, &MainWindow::on_delete_card));
   add_item(*card, "Du_plicate", sigc::mem_fun(*this, &MainWindow::on_duplicate));
   add_item(*card, "_Index…", sigc::mem_fun(*this, &MainWindow::on_index_dialog));
+  card->append(*Gtk::manage(new Gtk::SeparatorMenuItem()));
+  add_item(*card, "_Previous",
+           sigc::bind(sigc::mem_fun(*this, &MainWindow::step_card), -1));
+  add_item(*card, "_Next",
+           sigc::bind(sigc::mem_fun(*this, &MainWindow::step_card), 1));
   add_menu("_Card", *card);
 
   auto* search = Gtk::manage(new Gtk::Menu());
-  add_item(*search, "_Go To…",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Go To")),
-           GDK_KEY_g, Gdk::CONTROL_MASK);
-  add_item(*search, "_Find…",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Find")),
-           GDK_KEY_f, Gdk::CONTROL_MASK);
-  add_item(*search, "Find _Next",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Find Next")),
+  add_item(*search, "_Go To…", sigc::mem_fun(*this, &MainWindow::on_go_to), GDK_KEY_g,
+           Gdk::CONTROL_MASK);
+  add_item(*search, "_Find…", sigc::mem_fun(*this, &MainWindow::on_find), GDK_KEY_f,
+           Gdk::CONTROL_MASK);
+  add_item(*search, "Find _Next", sigc::mem_fun(*this, &MainWindow::on_find_next),
            GDK_KEY_F3, Gdk::ModifierType(0));
   add_menu("_Search", *search);
 
@@ -213,8 +240,7 @@ void MainWindow::build_toolbar()
   toolbar_.set_border_width(4);
   btn_add_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_card_add));
   btn_delete_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_delete_card));
-  btn_find_.signal_clicked().connect(
-      sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet), Glib::ustring("Find")));
+  btn_find_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_find));
   btn_print_.signal_clicked().connect(
       sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet), Glib::ustring("Print")));
   btn_list_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_view_list));
@@ -595,6 +621,17 @@ void MainWindow::on_new()
   card_face_.focus_index();
 }
 
+void MainWindow::open_path(const std::string& path)
+{
+  if (!stack_.open(path)) {
+    show_error(stack_.error().empty() ? "Could not open stack." : stack_.error());
+    return;
+  }
+  last_hit_id_ = -1;
+  last_query_.clear();
+  refresh();
+}
+
 void MainWindow::on_open()
 {
   if (!confirm_discard())
@@ -615,11 +652,7 @@ void MainWindow::on_open()
     return;
   const std::string path = dlg.get_filename();
   dlg.hide();
-  if (!stack_.open(path)) {
-    show_error(stack_.error().empty() ? "Could not open stack." : stack_.error());
-    return;
-  }
-  refresh();
+  open_path(path);
 }
 
 void MainWindow::on_save()
@@ -688,6 +721,211 @@ void MainWindow::on_index_dialog()
   card_face_.set_index(entry->get_text());
   flush_face();
   refresh();
+}
+
+void MainWindow::persist()
+{
+  int x = 0, y = 0, w = 0, h = 0;
+  get_position(x, y);
+  get_size(w, h);
+  settings_.window_x = x;
+  settings_.window_y = y;
+  settings_.window_w = w;
+  settings_.window_h = h;
+  settings_.paned = paned_.get_position();
+  if (stack_.is_open() && !stack_.path().empty()) {
+    settings_.last_path = stack_.path();
+    settings_.last_id = stack_.selected_id();
+    settings_.last_scroll = card_face_.body_scroll();
+  } else {
+    settings_.last_path.clear();
+    settings_.last_id = -1;
+    settings_.last_scroll = 0;
+  }
+  settings_.view = "list";
+  settings_.save();
+}
+
+void MainWindow::restore_session()
+{
+  if (settings_.last_path.empty() ||
+      !Glib::file_test(settings_.last_path, Glib::FILE_TEST_IS_REGULAR))
+    return;
+  if (!stack_.open(settings_.last_path)) {
+    set_status("Could not restore last stack.");
+    return;
+  }
+  if (settings_.last_id > 0)
+    stack_.select_id(settings_.last_id);
+  refresh();
+  const double scroll = settings_.last_scroll;
+  Glib::signal_idle().connect(
+      [this, scroll]() {
+        card_face_.set_body_scroll(scroll);
+        return false;
+      },
+      Glib::PRIORITY_LOW);
+}
+
+void MainWindow::step_card(int delta)
+{
+  if (!stack_.is_open() || stack_.count() == 0)
+    return;
+  flush_face();
+  const int n = stack_.count();
+  int row = stack_.selected_row();
+  if (row < 0)
+    row = 0;
+  row = (row + delta) % n;
+  if (row < 0)
+    row += n;
+  stack_.select_row(row);
+  fill_list();
+  bind_face();
+  update_title();
+  update_status();
+}
+
+void MainWindow::ensure_find_dialog()
+{
+  if (find_dlg_)
+    return;
+  find_dlg_ = std::make_unique<FindDialog>(*this);
+  find_dlg_->signal_find_next().connect(sigc::mem_fun(*this, &MainWindow::on_find_next));
+}
+
+void MainWindow::on_find()
+{
+  if (!stack_.is_open()) {
+    set_status("No stack open.");
+    return;
+  }
+  ensure_find_dialog();
+  if (!last_query_.empty())
+    find_dlg_->set_query(last_query_);
+  find_dlg_->present_find();
+}
+
+void MainWindow::on_find_next()
+{
+  Glib::ustring q;
+  if (find_dlg_ && find_dlg_->get_visible())
+    q = find_dlg_->query();
+  else
+    q = last_query_;
+  if (q.empty()) {
+    on_find();
+    return;
+  }
+  run_find(q, true);
+}
+
+void MainWindow::on_go_to()
+{
+  if (!stack_.is_open() || stack_.empty()) {
+    set_status("No stack open.");
+    return;
+  }
+  Gtk::Dialog dlg("Go To", *this, true);
+  dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dlg.add_button("_OK", Gtk::RESPONSE_ACCEPT);
+  dlg.set_default_response(Gtk::RESPONSE_ACCEPT);
+  auto* box = dlg.get_content_area();
+  box->set_border_width(8);
+  auto* row = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 8));
+  auto* lab = Gtk::manage(new Gtk::Label("Index:"));
+  auto* entry = Gtk::manage(new Gtk::Entry());
+  entry->set_activates_default(true);
+  entry->set_width_chars(28);
+  row->pack_start(*lab, Gtk::PACK_SHRINK);
+  row->pack_start(*entry, Gtk::PACK_EXPAND_WIDGET);
+  box->pack_start(*row, Gtk::PACK_SHRINK);
+  dlg.show_all();
+  if (dlg.run() != Gtk::RESPONSE_ACCEPT)
+    return;
+  const Glib::ustring prefix = entry->get_text();
+  dlg.hide();
+  flush_face();
+  if (!stack_.go_to_prefix(prefix)) {
+    set_status("Not found.");
+    return;
+  }
+  fill_list();
+  bind_face();
+  update_title();
+  update_status();
+}
+
+bool MainWindow::run_find(const Glib::ustring& query, bool resume)
+{
+  flush_face();
+  if (!stack_.is_open() || stack_.count() == 0) {
+    set_status("No stack open.");
+    return false;
+  }
+  const Glib::ustring needle = query.casefold();
+  if (needle.empty())
+    return false;
+  const int nlen = static_cast<int>(needle.size());
+  const int n = stack_.count();
+  int row = stack_.selected_row();
+  if (row < 0)
+    row = 0;
+  int field = 0;
+  int off = 0;
+  const bool can_resume = resume && last_hit_id_ > 0 && last_query_.casefold() == needle;
+  if (can_resume) {
+    row = 0;
+    for (int i = 0; i < n; ++i) {
+      if (stack_.cards()[static_cast<size_t>(i)].id == last_hit_id_) {
+        row = i;
+        break;
+      }
+    }
+    field = last_hit_in_index_ ? 0 : 1;
+    off = last_hit_offset_ + last_hit_length_;
+  }
+  last_query_ = query;
+  const int slots = n * 2;
+  const int start_slot = row * 2 + field;
+  for (int i = 0; i < slots; ++i) {
+    const int s = (start_slot + i) % slots;
+    const int r = s / 2;
+    const int f = s % 2;
+    const int from = (i == 0) ? off : 0;
+    const Card& c = stack_.cards()[static_cast<size_t>(r)];
+    const Glib::ustring& hay = f == 0 ? c.index : c.body;
+    int found = 0;
+    if (!u_find(hay, query, from, found))
+      continue;
+    last_hit_id_ = c.id;
+    last_hit_in_index_ = f == 0;
+    last_hit_offset_ = found;
+    last_hit_length_ = nlen;
+    const bool same = c.id == stack_.selected_id();
+    stack_.select_row(r);
+    fill_list();
+    if (!same)
+      bind_face();
+    card_face_.show_find_hit(f == 0, found, nlen);
+    update_title();
+    update_status();
+    return true;
+  }
+  set_status("Not found.");
+  return false;
+}
+
+bool MainWindow::in_editable_focus() const
+{
+  auto* focus = get_focus();
+  if (!focus)
+    return false;
+  if (dynamic_cast<const Gtk::Entry*>(focus))
+    return true;
+  if (dynamic_cast<const Gtk::TextView*>(focus))
+    return true;
+  return false;
 }
 
 void MainWindow::on_quit()
@@ -818,14 +1056,31 @@ void MainWindow::on_not_yet(const Glib::ustring& feature)
 
 bool MainWindow::on_key_press_event(GdkEventKey* event)
 {
-  if (event && event->keyval == GDK_KEY_F5) {
+  if (!event)
+    return Gtk::Window::on_key_press_event(event);
+  const guint mods = event->state & Gtk::AccelGroup::get_default_mod_mask();
+  if (event->keyval == GDK_KEY_F5) {
     if ((event->state & Gdk::SHIFT_MASK) != 0)
       on_view_card();
     else
       on_view_list();
     return true;
   }
-  if (event && event->keyval == GDK_KEY_Delete) {
+  if (event->keyval == GDK_KEY_Insert && !in_editable_focus()) {
+    on_card_add();
+    return true;
+  }
+  if ((event->keyval == GDK_KEY_Left || event->keyval == GDK_KEY_KP_Left) &&
+      mods == Gdk::MOD1_MASK) {
+    step_card(-1);
+    return true;
+  }
+  if ((event->keyval == GDK_KEY_Right || event->keyval == GDK_KEY_KP_Right) &&
+      mods == Gdk::MOD1_MASK) {
+    step_card(1);
+    return true;
+  }
+  if (event->keyval == GDK_KEY_Delete) {
     auto* focus = get_focus();
     if (focus == &list_view_) {
       on_delete_card();

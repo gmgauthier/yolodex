@@ -3,9 +3,13 @@
 #pragma once
 
 #include "card_face.hpp"
+#include "find_dialog.hpp"
+#include "settings.hpp"
 #include "stack.hpp"
 
 #include <gtkmm.h>
+
+#include <memory>
 
 namespace yolodex {
 
@@ -38,6 +42,16 @@ class MainWindow : public Gtk::Window {
   bool do_save_as();
   std::string ensure_suffix(const std::string& path) const;
   std::string samples_dir() const;
+  void persist();
+  void restore_session();
+  void open_path(const std::string& path);
+  void step_card(int delta);
+  void ensure_find_dialog();
+  void on_find();
+  void on_find_next();
+  void on_go_to();
+  bool run_find(const Glib::ustring& query, bool resume);
+  bool in_editable_focus() const;
 
   void on_new();
   void on_open();
@@ -94,8 +108,15 @@ class MainWindow : public Gtk::Window {
   Gtk::TreeModelColumnRecord list_cols_;
 
   Stack stack_;
+  Settings settings_;
+  std::unique_ptr<FindDialog> find_dlg_;
   Gtk::TreeModel::Path list_hover_path_;
   Gtk::TreeModel::Path list_current_path_;
+  Glib::ustring last_query_;
+  int last_hit_id_ = -1;
+  bool last_hit_in_index_ = false;
+  int last_hit_offset_ = 0;
+  int last_hit_length_ = 0;
 };
 
 }  // namespace yolodex

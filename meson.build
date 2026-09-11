@@ -36,6 +36,8 @@ executable(
   'src/about_dialog.cpp',
   'src/card_face.cpp',
   'src/stack.cpp',
+  'src/settings.cpp',
+  'src/find_dialog.cpp',
   include_directories: inc,
   dependencies: [gtkmm, libxml],
   install: true,

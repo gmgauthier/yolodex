@@ -16,6 +16,10 @@ class CardFace : public Gtk::Box {
   void set_body(const Glib::ustring& text);
   Glib::ustring body() const;
   void focus_index();
+  void show_find_hit(bool in_index, int offset, int length);
+  void clear_find_hit();
+  double body_scroll() const;
+  void set_body_scroll(double value);
 
   Gtk::TextView& body_view() { return body_; }
 
@@ -26,6 +30,7 @@ class CardFace : public Gtk::Box {
   void on_index_activate();
   bool on_index_focus_out(GdkEventFocus* event);
   void on_body_changed();
+  void ensure_tags();
 
   Gtk::Frame frame_;
   Gtk::Box inner_{Gtk::ORIENTATION_VERTICAL, 0};

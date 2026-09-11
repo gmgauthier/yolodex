@@ -176,6 +176,21 @@ bool Stack::select_row(int row)
   return true;
 }
 
+bool Stack::go_to_prefix(const Glib::ustring& prefix)
+{
+  const Glib::ustring p = prefix.casefold();
+  if (p.empty() || cards_.empty())
+    return false;
+  for (int i = 0; i < count(); ++i) {
+    const Glib::ustring idx = cards_[static_cast<size_t>(i)].index.casefold();
+    if (idx.size() >= p.size() && idx.compare(0, p.size(), p) == 0) {
+      selected_row_ = i;
+      return true;
+    }
+  }
+  return false;
+}
+
 void Stack::commit(const Glib::ustring& index, const Glib::ustring& body)
 {
   Card* c = selected();

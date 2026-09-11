@@ -43,6 +43,7 @@ class Stack {
   bool remove_selected();
   bool select_id(int id);
   bool select_row(int row);
+  bool go_to_prefix(const Glib::ustring& prefix);
   void commit(const Glib::ustring& index, const Glib::ustring& body);
 
  private:
