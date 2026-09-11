@@ -343,18 +343,22 @@ void MainWindow::build_body()
   card_face_.signal_body_changed().connect(
       sigc::mem_fun(*this, &MainWindow::on_body_changed));
 
-  card_tabs_.set_no_show_all(true);
-  card_tabs_.hide();
-  card_tabs_.signal_card_chosen().connect(
-      sigc::mem_fun(*this, &MainWindow::select_card_id));
-  card_tabs_.signal_step().connect(sigc::mem_fun(*this, &MainWindow::step_card));
+  auto hook_tabs = [this](CardView& tabs) {
+    tabs.set_no_show_all(true);
+    tabs.hide();
+    tabs.signal_card_chosen().connect(sigc::mem_fun(*this, &MainWindow::select_card_id));
+    tabs.signal_step().connect(sigc::mem_fun(*this, &MainWindow::step_card));
+  };
+  hook_tabs(card_tabs_above_);
+  hook_tabs(card_tabs_below_);
 
   paned_.pack1(list_scroll_, false, false);
   paned_.pack2(card_face_, true, false);
   paned_.set_position(220);
 
-  work_.pack_start(card_tabs_, Gtk::PACK_SHRINK);
+  work_.pack_start(card_tabs_above_, Gtk::PACK_SHRINK);
   work_.pack_start(paned_, Gtk::PACK_EXPAND_WIDGET);
+  work_.pack_start(card_tabs_below_, Gtk::PACK_SHRINK);
   root_.pack_start(work_, Gtk::PACK_EXPAND_WIDGET);
   root_.pack_start(status_, Gtk::PACK_SHRINK);
 }
@@ -513,8 +517,10 @@ void MainWindow::fill_list()
   if (list_current_path_.size() > 0)
     scroll_nav_vertically(list_current_path_);
   list_view_.queue_draw();
-  if (in_card_view_)
-    card_tabs_.bind(stack_);
+  if (in_card_view_) {
+    card_tabs_above_.bind(stack_, CardView::Side::Before);
+    card_tabs_below_.bind(stack_, CardView::Side::After);
+  }
 }
 
 void MainWindow::sync_list_current()
@@ -1039,10 +1045,13 @@ void MainWindow::set_view(bool card)
   in_card_view_ = card;
   if (card) {
     list_scroll_.hide();
-    card_tabs_.bind(stack_);
-    card_tabs_.show();
+    card_tabs_above_.bind(stack_, CardView::Side::Before);
+    card_tabs_below_.bind(stack_, CardView::Side::After);
+    card_tabs_above_.show();
+    card_tabs_below_.show();
   } else {
-    card_tabs_.hide();
+    card_tabs_above_.hide();
+    card_tabs_below_.hide();
     list_scroll_.show();
     if (settings_.paned > 40)
       paned_.set_position(settings_.paned);

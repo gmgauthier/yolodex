@@ -12,9 +12,11 @@ namespace yolodex {
 
 class CardView : public Gtk::DrawingArea {
  public:
+  enum class Side { Before, After };
+
   CardView();
 
-  void bind(const Stack& stack);
+  void bind(const Stack& stack, Side side);
 
   sigc::signal<void, int>& signal_card_chosen() { return signal_card_chosen_; }
   sigc::signal<void, int>& signal_step() { return signal_step_; }
@@ -36,11 +38,13 @@ class CardView : public Gtk::DrawingArea {
   void layout_tabs();
   int hit_id(double x, double y) const;
   void draw_tab(const Cairo::RefPtr<Cairo::Context>& cr, const Tab& tab, bool hover,
-                bool front);
+                bool near_face);
 
   std::vector<Tab> tabs_;
   int selected_id_ = -1;
   int hover_id_ = -1;
+  int x_base_ = 0;
+  Side side_ = Side::Before;
   sigc::signal<void, int> signal_card_chosen_;
   sigc::signal<void, int> signal_step_;
 };

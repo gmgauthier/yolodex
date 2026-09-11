@@ -21,13 +21,15 @@ CardView::CardView()
   set_vexpand(false);
   add_events(Gdk::BUTTON_PRESS_MASK | Gdk::POINTER_MOTION_MASK | Gdk::LEAVE_NOTIFY_MASK |
              Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
-  set_size_request(-1, kPad);
+  set_size_request(-1, 0);
 }
 
-void CardView::bind(const Stack& stack)
+void CardView::bind(const Stack& stack, Side side)
 {
+  side_ = side;
   tabs_.clear();
   selected_id_ = stack.selected_id();
+  std::vector<Tab> all;
   int sel_row = -1;
   int i = 0;
   for (const Card& c : stack.cards()) {
@@ -36,25 +38,37 @@ void CardView::bind(const Stack& stack)
     t.index = c.index.empty() ? Glib::ustring("Untitled") : c.index;
     if (c.id == selected_id_)
       sel_row = i;
-    tabs_.push_back(std::move(t));
+    all.push_back(std::move(t));
     ++i;
   }
+  const int n = static_cast<int>(all.size());
   if (sel_row < 0)
-    sel_row = static_cast<int>(tabs_.size()) - 1;
-  int start = sel_row - (kMaxTabs - 1);
-  if (start < 0)
-    start = 0;
+    sel_row = n > 0 ? n - 1 : 0;
+
   std::vector<Tab> vis;
-  for (int r = start; r < sel_row; ++r)
-    vis.push_back(tabs_[static_cast<size_t>(r)]);
+  if (side == Side::Before) {
+    int start = sel_row - kMaxTabs;
+    if (start < 0)
+      start = 0;
+    for (int r = start; r < sel_row; ++r)
+      vis.push_back(all[static_cast<size_t>(r)]);
+    x_base_ = 0;
+  } else {
+    const int last = std::min(n, sel_row + 1 + kMaxTabs);
+    for (int r = sel_row + 1; r < last; ++r)
+      vis.push_back(all[static_cast<size_t>(r)]);
+    const int above = std::min(sel_row, kMaxTabs);
+    x_base_ = above;
+  }
   tabs_ = std::move(vis);
 
   const int shown = static_cast<int>(tabs_.size());
-  int h = kPad;
+  int h = 0;
   if (shown > 0)
     h = kPad * 2 + kTabH + (shown - 1) * kYStep;
   set_size_request(-1, h);
   hover_id_ = -1;
+  queue_resize();
   queue_draw();
 }
 
@@ -63,7 +77,7 @@ void CardView::layout_tabs()
   const int w = get_allocated_width();
   const int n = static_cast<int>(tabs_.size());
   for (int k = 0; k < n; ++k) {
-    const int x = kPad + k * kXStep;
+    const int x = kPad + (x_base_ + k) * kXStep;
     const int y = kPad + k * kYStep;
     const int tw = std::max(40, w - x - kPad);
     tabs_[static_cast<size_t>(k)].rect = Gdk::Rectangle(x, y, tw, kTabH);
@@ -82,7 +96,7 @@ int CardView::hit_id(double x, double y) const
 }
 
 void CardView::draw_tab(const Cairo::RefPtr<Cairo::Context>& cr, const Tab& tab, bool hover,
-                        bool front)
+                        bool near_face)
 {
   const double x = tab.rect.get_x();
   const double y = tab.rect.get_y();
@@ -90,7 +104,7 @@ void CardView::draw_tab(const Cairo::RefPtr<Cairo::Context>& cr, const Tab& tab,
   const double h = tab.rect.get_height();
   if (hover)
     cr->set_source_rgb(0.769, 0.769, 0.737);
-  else if (front)
+  else if (near_face)
     cr->set_source_rgb(0.969, 0.961, 0.937);
   else
     cr->set_source_rgb(0.910, 0.894, 0.847);
@@ -124,7 +138,8 @@ bool CardView::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
   const int n = static_cast<int>(tabs_.size());
   for (int k = 0; k < n; ++k) {
     const Tab& tab = tabs_[static_cast<size_t>(k)];
-    draw_tab(cr, tab, tab.id == hover_id_, k == n - 1);
+    const bool near = (side_ == Side::Before) ? (k == n - 1) : (k == 0);
+    draw_tab(cr, tab, tab.id == hover_id_, near);
   }
   return true;
 }

@@ -106,11 +106,12 @@ class MainWindow : public Gtk::Window {
   Gtk::RadioMenuItem* view_card_item_ = nullptr;
   Glib::RefPtr<Gtk::AccelGroup> accel_;
   Gtk::Box work_{Gtk::ORIENTATION_VERTICAL, 0};
-  CardView card_tabs_;
+  CardView card_tabs_above_;
   Gtk::Paned paned_{Gtk::ORIENTATION_HORIZONTAL};
   Gtk::ScrolledWindow list_scroll_;
   Gtk::TreeView list_view_;
   CardFace card_face_;
+  CardView card_tabs_below_;
   Gtk::Statusbar status_;
   guint status_ctx_ = 0;
 
