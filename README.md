@@ -1,5 +1,7 @@
 # YOLO-dex
 
+**Vended by Grok Build**
+
 ![YOLO-dex List view](brand/screenshot-list.png)
 
 An **index-card stack** for The Lunduke Computer Operating System (LCOS). The window is Windows 3.x / 95 Cardfile, not a Markdown notebook.
