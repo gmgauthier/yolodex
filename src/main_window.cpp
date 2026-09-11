@@ -5,7 +5,10 @@
 #include "paths.hpp"
 #include "config.hpp"
 
+#include <cmath>
 #include <iostream>
+
+#include <pango/pangocairo.h>
 
 #include <glibmm/fileutils.h>
 #include <glibmm/miscutils.h>
@@ -83,6 +86,60 @@ bool u_find(const Glib::ustring& hay, const Glib::ustring& needle, int from, int
     return false;
   out = static_cast<int>(pos);
   return true;
+}
+
+void draw_print_card(const Cairo::RefPtr<Cairo::Context>& cr,
+                     const Glib::RefPtr<Gtk::PrintContext>& ctx, double x, double y,
+                     double w, double h, const Glib::ustring& index,
+                     const Glib::ustring& body)
+{
+  const double header = std::min(26.0, std::max(18.0, h * 0.16));
+  cr->save();
+  cr->rectangle(x, y, w, h);
+  cr->clip();
+  cr->set_source_rgb(0.969, 0.961, 0.937);
+  cr->rectangle(x, y, w, h);
+  cr->fill();
+  cr->set_source_rgb(0.910, 0.894, 0.847);
+  cr->rectangle(x, y, w, header);
+  cr->fill();
+  cr->set_source_rgb(0.25, 0.25, 0.25);
+  cr->set_line_width(1.0);
+  cr->rectangle(x + 0.5, y + 0.5, w - 1.0, h - 1.0);
+  cr->stroke();
+  cr->move_to(x, y + header);
+  cr->line_to(x + w, y + header);
+  cr->stroke();
+
+  auto layout = ctx->create_pango_layout();
+  Pango::FontDescription desc;
+  desc.set_family("Sans");
+  desc.set_weight(Pango::WEIGHT_BOLD);
+  desc.set_size(11 * Pango::SCALE);
+  layout->set_font_description(desc);
+  layout->set_ellipsize(Pango::ELLIPSIZE_END);
+  layout->set_width(static_cast<int>((w - 16) * Pango::SCALE));
+  layout->set_text(index.empty() ? Glib::ustring("Untitled") : index);
+  cr->set_source_rgb(0, 0, 0);
+  cr->move_to(x + 8, y + 5);
+  pango_cairo_show_layout(cr->cobj(), layout->gobj());
+
+  desc.set_family("Serif");
+  desc.set_weight(Pango::WEIGHT_NORMAL);
+  desc.set_size(10 * Pango::SCALE);
+  layout->set_font_description(desc);
+  layout->set_ellipsize(Pango::ELLIPSIZE_NONE);
+  layout->set_wrap(Pango::WRAP_WORD_CHAR);
+  layout->set_width(static_cast<int>((w - 16) * Pango::SCALE));
+  layout->set_height(-1);
+  layout->set_text(body);
+  cr->save();
+  cr->rectangle(x + 4, y + header + 2, w - 8, h - header - 6);
+  cr->clip();
+  cr->move_to(x + 8, y + header + 6);
+  pango_cairo_show_layout(cr->cobj(), layout->gobj());
+  cr->restore();
+  cr->restore();
 }
 
 }  // namespace
@@ -167,34 +224,21 @@ void MainWindow::build_menu()
   add_item(*file, "Save _As…", sigc::mem_fun(*this, &MainWindow::on_save_as), GDK_KEY_s,
            Gdk::CONTROL_MASK | Gdk::SHIFT_MASK);
   file->append(*Gtk::manage(new Gtk::SeparatorMenuItem()));
-  add_item(*file, "_Print…",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Print")),
-           GDK_KEY_p, Gdk::CONTROL_MASK);
-  add_item(*file, "Print A_ll",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Print All")));
+  add_item(*file, "_Print…", sigc::mem_fun(*this, &MainWindow::on_print), GDK_KEY_p,
+           Gdk::CONTROL_MASK);
+  add_item(*file, "Print A_ll", sigc::mem_fun(*this, &MainWindow::on_print_all));
   file->append(*Gtk::manage(new Gtk::SeparatorMenuItem()));
   add_item(*file, "E_xit", sigc::mem_fun(*this, &MainWindow::on_quit));
   add_menu("_File", *file);
 
   auto* edit = Gtk::manage(new Gtk::Menu());
-  add_item(*edit, "_Undo",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Undo")));
-  add_item(*edit, "Cu_t",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Cut")));
-  add_item(*edit, "_Copy",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Copy")));
-  add_item(*edit, "_Paste",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Paste")));
+  add_item(*edit, "_Undo", sigc::mem_fun(*this, &MainWindow::on_undo), GDK_KEY_z,
+           Gdk::CONTROL_MASK);
+  add_item(*edit, "Cu_t", sigc::mem_fun(*this, &MainWindow::on_cut));
+  add_item(*edit, "_Copy", sigc::mem_fun(*this, &MainWindow::on_copy));
+  add_item(*edit, "_Paste", sigc::mem_fun(*this, &MainWindow::on_paste));
   edit->append(*Gtk::manage(new Gtk::SeparatorMenuItem()));
-  add_item(*edit, "_Restore",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet),
-                      Glib::ustring("Restore")));
+  add_item(*edit, "_Restore", sigc::mem_fun(*this, &MainWindow::on_restore));
   add_menu("_Edit", *edit);
 
   auto* view = Gtk::manage(new Gtk::Menu());
@@ -241,8 +285,7 @@ void MainWindow::build_toolbar()
   btn_add_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_card_add));
   btn_delete_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_delete_card));
   btn_find_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_find));
-  btn_print_.signal_clicked().connect(
-      sigc::bind(sigc::mem_fun(*this, &MainWindow::on_not_yet), Glib::ustring("Print")));
+  btn_print_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_print));
   btn_list_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_view_list));
   btn_card_.signal_clicked().connect(sigc::mem_fun(*this, &MainWindow::on_view_card));
 
@@ -498,6 +541,7 @@ void MainWindow::bind_face()
   card_face_.set_enabled(true);
   card_face_.set_index(c->index);
   card_face_.set_body(c->body);
+  card_face_.take_restore_point();
 }
 
 void MainWindow::flush_face()
@@ -570,6 +614,7 @@ bool MainWindow::do_save()
     show_error(stack_.error().empty() ? "Could not save." : stack_.error());
     return false;
   }
+  card_face_.take_restore_point();
   update_title();
   update_status();
   return true;
@@ -607,6 +652,7 @@ bool MainWindow::do_save_as()
     show_error(stack_.error().empty() ? "Could not save." : stack_.error());
     return false;
   }
+  card_face_.take_restore_point();
   update_title();
   update_status();
   return true;
@@ -686,6 +732,17 @@ void MainWindow::on_delete_card()
   if (!stack_.selected())
     return;
   flush_face();
+  Glib::ustring name = card_face_.index();
+  if (name.empty())
+    name = "Untitled";
+  Gtk::MessageDialog dlg(*this, "Delete card \"" + name + "\"?", false,
+                         Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_NONE, true);
+  dlg.set_title("YOLO-dex");
+  dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+  dlg.add_button("_Delete", Gtk::RESPONSE_ACCEPT);
+  dlg.set_default_response(Gtk::RESPONSE_CANCEL);
+  if (dlg.run() != Gtk::RESPONSE_ACCEPT)
+    return;
   stack_.remove_selected();
   refresh();
 }
@@ -1047,6 +1104,140 @@ bool MainWindow::on_list_key(GdkEventKey* event)
     return true;
   }
   return false;
+}
+
+void MainWindow::on_print()
+{
+  run_print(false);
+}
+
+void MainWindow::on_print_all()
+{
+  run_print(true);
+}
+
+void MainWindow::run_print(bool all)
+{
+  flush_face();
+  if (!stack_.is_open() || stack_.count() == 0) {
+    set_status("No stack open.");
+    return;
+  }
+  if (!all && !stack_.selected()) {
+    set_status("Nothing to print.");
+    return;
+  }
+
+  struct Job {
+    std::vector<Card> cards;
+    bool all = false;
+    int per_page = 4;
+  };
+  auto job = std::make_shared<Job>();
+  job->all = all;
+  if (all)
+    job->cards = stack_.cards();
+  else
+    job->cards.push_back(*stack_.selected());
+
+  auto op = Gtk::PrintOperation::create();
+  op->set_job_name(stack_.display_name());
+  op->set_embed_page_setup(true);
+  op->signal_begin_print().connect(
+      [op, job](const Glib::RefPtr<Gtk::PrintContext>&) {
+        int n = 1;
+        if (job->all) {
+          n = static_cast<int>(
+              std::ceil(static_cast<double>(job->cards.size()) / job->per_page));
+          if (n < 1)
+            n = 1;
+        }
+        op->set_n_pages(n);
+      });
+  op->signal_draw_page().connect(
+      [job](const Glib::RefPtr<Gtk::PrintContext>& ctx, int page) {
+        auto cr = ctx->get_cairo_context();
+        const double pw = ctx->get_width();
+        const double ph = ctx->get_height();
+        const double gap = 10.0;
+        const int per = job->per_page;
+        const double card_h = (ph - gap * (per - 1)) / per;
+        const int start = job->all ? page * per : 0;
+        const int n = job->all ? per : 1;
+        for (int i = 0; i < n; ++i) {
+          const int idx = start + i;
+          if (idx < 0 || idx >= static_cast<int>(job->cards.size()))
+            break;
+          const Card& c = job->cards[static_cast<size_t>(idx)];
+          const double y = i * (card_h + gap);
+          draw_print_card(cr, ctx, 0, y, pw, card_h, c.index, c.body);
+        }
+      });
+  try {
+    const auto result = op->run(Gtk::PRINT_OPERATION_ACTION_PRINT_DIALOG, *this);
+    if (result == Gtk::PRINT_OPERATION_RESULT_APPLY)
+      set_status(all ? "Sent all cards to printer." : "Sent card to printer.");
+    else if (result == Gtk::PRINT_OPERATION_RESULT_ERROR)
+      set_status("Print failed.");
+  } catch (const Gtk::PrintError& e) {
+    set_status(Glib::ustring("Print failed: ") + e.what());
+  }
+}
+
+void MainWindow::on_undo()
+{
+  if (!card_face_.undo())
+    set_status("Nothing to undo.");
+}
+
+void MainWindow::on_cut()
+{
+  auto* focus = get_focus();
+  if (auto* e = dynamic_cast<Gtk::Entry*>(focus)) {
+    e->cut_clipboard();
+    return;
+  }
+  if (dynamic_cast<Gtk::TextView*>(focus) == &card_face_.body_view()) {
+    auto clip = Gtk::Clipboard::get();
+    card_face_.body_view().get_buffer()->cut_clipboard(clip);
+  }
+}
+
+void MainWindow::on_copy()
+{
+  auto* focus = get_focus();
+  if (auto* e = dynamic_cast<Gtk::Entry*>(focus)) {
+    e->copy_clipboard();
+    return;
+  }
+  if (dynamic_cast<Gtk::TextView*>(focus) == &card_face_.body_view()) {
+    auto clip = Gtk::Clipboard::get();
+    card_face_.body_view().get_buffer()->copy_clipboard(clip);
+  }
+}
+
+void MainWindow::on_paste()
+{
+  auto* focus = get_focus();
+  if (auto* e = dynamic_cast<Gtk::Entry*>(focus)) {
+    e->paste_clipboard();
+    return;
+  }
+  if (dynamic_cast<Gtk::TextView*>(focus) == &card_face_.body_view()) {
+    auto clip = Gtk::Clipboard::get();
+    card_face_.body_view().get_buffer()->paste_clipboard(clip);
+  }
+}
+
+void MainWindow::on_restore()
+{
+  if (!stack_.selected())
+    return;
+  if (!card_face_.can_restore()) {
+    set_status("Card is already restored.");
+    return;
+  }
+  card_face_.restore();
 }
 
 void MainWindow::on_not_yet(const Glib::ustring& feature)

@@ -13,9 +13,12 @@ CardFace::CardFace() : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0)
 
   index_.get_style_context()->add_class("yolodex-card-index");
   index_.set_placeholder_text("Index");
+  index_.set_margin_start(2);
+  index_.set_margin_end(2);
   index_.signal_activate().connect(sigc::mem_fun(*this, &CardFace::on_index_activate));
   index_.signal_focus_out_event().connect(
       sigc::mem_fun(*this, &CardFace::on_index_focus_out));
+  index_.signal_changed().connect(sigc::mem_fun(*this, &CardFace::on_index_edited));
 
   body_buf_ = Gtk::TextBuffer::create();
   body_.set_buffer(body_buf_);
@@ -32,6 +35,7 @@ CardFace::CardFace() : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0)
   body_scroll_.add(body_);
 
   inner_.pack_start(index_, Gtk::PACK_SHRINK);
+  inner_.pack_start(rule_, Gtk::PACK_SHRINK);
   inner_.pack_start(body_scroll_, Gtk::PACK_EXPAND_WIDGET);
   frame_.add(inner_);
   pack_start(frame_, Gtk::PACK_EXPAND_WIDGET);
@@ -150,10 +154,83 @@ bool CardFace::on_index_focus_out(GdkEventFocus*)
   return false;
 }
 
+void CardFace::on_index_edited()
+{
+  if (suppress_ || undoing_)
+    return;
+  push_undo();
+  prev_.index = index_.get_text();
+}
+
 void CardFace::on_body_changed()
 {
-  if (!suppress_)
-    signal_body_changed_.emit();
+  if (suppress_)
+    return;
+  if (!undoing_) {
+    push_undo();
+    prev_.index = index();
+    prev_.body = body();
+  }
+  signal_body_changed_.emit();
+}
+
+void CardFace::push_undo()
+{
+  if (!undo_.empty() && undo_.back().index == prev_.index && undo_.back().body == prev_.body)
+    return;
+  undo_.push_back(prev_);
+  if (undo_.size() > 80)
+    undo_.erase(undo_.begin());
+}
+
+void CardFace::take_restore_point()
+{
+  restore_.index = index();
+  restore_.body = body();
+  prev_ = restore_;
+  undo_.clear();
+}
+
+bool CardFace::can_restore() const
+{
+  return index() != restore_.index || body() != restore_.body;
+}
+
+bool CardFace::can_undo() const
+{
+  return !undo_.empty();
+}
+
+void CardFace::restore()
+{
+  undoing_ = true;
+  suppress_ = true;
+  index_.set_text(restore_.index);
+  body_buf_->set_text(restore_.body);
+  suppress_ = false;
+  undoing_ = false;
+  prev_ = restore_;
+  undo_.clear();
+  signal_index_changed_.emit();
+  signal_body_changed_.emit();
+}
+
+bool CardFace::undo()
+{
+  if (undo_.empty())
+    return false;
+  const Snap snap = undo_.back();
+  undo_.pop_back();
+  undoing_ = true;
+  suppress_ = true;
+  index_.set_text(snap.index);
+  body_buf_->set_text(snap.body);
+  suppress_ = false;
+  undoing_ = false;
+  prev_ = snap;
+  signal_index_changed_.emit();
+  signal_body_changed_.emit();
+  return true;
 }
 
 }  // namespace yolodex

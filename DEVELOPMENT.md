@@ -13,7 +13,7 @@ Address Book stays a later, separate app (columns + vCard). YOLO-dex is notes on
 
 ## Status (2026-09-11)
 
-**M2 in tree.** Find / Find Next / Go To, prev/next, last-stack restore in `~/.config/yolodex/yolodex.ini`.
+**M3 in tree.** Print / Print All, Edit verbs, Restore snapshot, confirm Delete. Last-stack restore and Find from M2.
 
 ## 1. Locked decisions
 
@@ -174,7 +174,7 @@ Scaffold. Meson, `Application` flock, `MainWindow`, menus, empty List layout, to
 
 `Stack` XML load/save. Add / Delete / Duplicate. Index + body bind. Alpha sort. Dirty / New / Open / Save / Save As. Confirm discard if dirty. Sample `data/samples/recipes.yolodex` (git-only, `export-ignore`).
 
-### M2 — Search + restore (this slice)
+### M2 — Search + restore
 
 Find / Find Next (case-insensitive, index then body, wrap the stack). Go To prefix dialog. Prev/Next. Keys:
 
@@ -191,7 +191,7 @@ Find / Find Next (case-insensitive, index then body, wrap the stack). Go To pref
 
 Restore last file + last card id from `~/.config/yolodex/yolodex.ini`. If cheap, also save body scroll on the selected card.
 
-### M3 — Print + List polish
+### M3 — Print + List polish (this slice)
 
 Print / Print All. Card-face chrome. Cut/Copy/Paste/Undo via the TextView buffer. `Card → Restore` = revert current card to last saved snapshot. Confirm Delete. (List hover/left-pin landed with M1.)
 

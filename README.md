@@ -10,7 +10,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**M2 in tree.** Stack file plus Find / Find Next / Go To, prev/next card, and restore last stack + card from `~/.config/yolodex/yolodex.ini`. Sample: `data/samples/recipes.yolodex`. Print and Card view come later.
+**M3 in tree.** Find/Go To/restore last stack, plus Print / Print All, Edit Cut/Copy/Paste/Undo, Card Restore, and confirm Delete. Card view comes later.
 
 | Doc | What |
 |---|---|

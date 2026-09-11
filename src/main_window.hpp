@@ -52,6 +52,14 @@ class MainWindow : public Gtk::Window {
   void on_go_to();
   bool run_find(const Glib::ustring& query, bool resume);
   bool in_editable_focus() const;
+  void on_print();
+  void on_print_all();
+  void run_print(bool all);
+  void on_undo();
+  void on_cut();
+  void on_copy();
+  void on_paste();
+  void on_restore();
 
   void on_new();
   void on_open();
