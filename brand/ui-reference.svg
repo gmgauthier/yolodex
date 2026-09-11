@@ -11,6 +11,7 @@
   </defs>
 
   <!-- ========== List view ========== -->
+  <g id="list-view">
   <rect width="800" height="560" fill="#D4D0C8"/>
   <rect x="0.5" y="0.5" width="799" height="559" fill="none" stroke="#FFFFFF"/>
   <rect x="2.5" y="2.5" width="795" height="555" fill="none" stroke="#808080"/>
@@ -91,6 +92,7 @@
   <line x1="5" y1="526" x2="795" y2="526" stroke="#808080"/>
   <line x1="5" y1="527" x2="795" y2="527" stroke="#FFFFFF"/>
   <text x="14" y="545" font-family="Tahoma, Geneva, DejaVu Sans, sans-serif" font-size="12" fill="#000">List — 4 cards</text>
+  </g>
 
   <!-- ========== Card view ========== -->
   <g transform="translate(0,584)">
