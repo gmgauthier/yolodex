@@ -20,6 +20,10 @@ CardFace::CardFace() : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0)
   body_buf_ = Gtk::TextBuffer::create();
   body_.set_buffer(body_buf_);
   body_.set_wrap_mode(Gtk::WRAP_WORD_CHAR);
+  body_.set_left_margin(16);
+  body_.set_right_margin(16);
+  body_.set_top_margin(12);
+  body_.set_bottom_margin(16);
   body_.get_style_context()->add_class("yolodex-card-body");
   body_buf_->signal_changed().connect(sigc::mem_fun(*this, &CardFace::on_body_changed));
 
