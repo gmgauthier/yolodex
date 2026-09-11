@@ -2,6 +2,7 @@
 
 #include "main_window.hpp"
 #include "about_dialog.hpp"
+#include "font_dialog.hpp"
 #include "paths.hpp"
 #include "config.hpp"
 
@@ -91,7 +92,8 @@ bool u_find(const Glib::ustring& hay, const Glib::ustring& needle, int from, int
 void draw_print_card(const Cairo::RefPtr<Cairo::Context>& cr,
                      const Glib::RefPtr<Gtk::PrintContext>& ctx, double x, double y,
                      double w, double h, const Glib::ustring& index,
-                     const Glib::ustring& body)
+                     const Glib::ustring& body, const std::string& family, int size_pt,
+                     int weight)
 {
   const double header = std::min(26.0, std::max(18.0, h * 0.16));
   cr->save();
@@ -108,11 +110,13 @@ void draw_print_card(const Cairo::RefPtr<Cairo::Context>& cr,
   cr->line_to(x + w, y + header);
   cr->stroke();
 
+  const std::string fam = family.empty() ? std::string("Serif") : family;
+  const int sz = std::max(8, std::min(size_pt, 32));
   auto layout = ctx->create_pango_layout();
   Pango::FontDescription desc;
-  desc.set_family("Sans");
+  desc.set_family(fam);
   desc.set_weight(Pango::WEIGHT_BOLD);
-  desc.set_size(11 * Pango::SCALE);
+  desc.set_size(sz * Pango::SCALE);
   layout->set_font_description(desc);
   layout->set_ellipsize(Pango::ELLIPSIZE_END);
   layout->set_width(static_cast<int>((w - 16) * Pango::SCALE));
@@ -121,9 +125,8 @@ void draw_print_card(const Cairo::RefPtr<Cairo::Context>& cr,
   cr->move_to(x + 8, y + 5);
   pango_cairo_show_layout(cr->cobj(), layout->gobj());
 
-  desc.set_family("Serif");
-  desc.set_weight(Pango::WEIGHT_NORMAL);
-  desc.set_size(10 * Pango::SCALE);
+  desc.set_weight(static_cast<Pango::Weight>(weight));
+  desc.set_size(sz * Pango::SCALE);
   layout->set_font_description(desc);
   layout->set_ellipsize(Pango::ELLIPSIZE_NONE);
   layout->set_wrap(Pango::WRAP_WORD_CHAR);
@@ -171,6 +174,8 @@ MainWindow::MainWindow()
   add(root_);
   show_all();
   signal_hide().connect(sigc::mem_fun(*this, &MainWindow::persist));
+  ensure_user_fonts();
+  apply_appearance();
   restore_session();
   if (settings_.view == "card")
     set_view(true);
@@ -270,6 +275,10 @@ void MainWindow::build_menu()
   add_item(*search, "Find _Next", sigc::mem_fun(*this, &MainWindow::on_find_next),
            GDK_KEY_F3, Gdk::ModifierType(0));
   add_menu("_Search", *search);
+
+  auto* options = Gtk::manage(new Gtk::Menu());
+  add_item(*options, "_Appearance…", sigc::mem_fun(*this, &MainWindow::on_font));
+  add_menu("_Options", *options);
 
   auto* help = Gtk::manage(new Gtk::Menu());
   add_item(*help, "_About YOLO-dex", sigc::mem_fun(*this, &MainWindow::on_about));
@@ -1201,9 +1210,15 @@ void MainWindow::run_print(bool all)
     std::vector<Card> cards;
     bool all = false;
     int per_page = 4;
+    std::string family;
+    int size_pt = 12;
+    int weight = 400;
   };
   auto job = std::make_shared<Job>();
   job->all = all;
+  job->family = settings_.font_family;
+  job->size_pt = settings_.font_size;
+  job->weight = settings_.font_weight;
   if (all)
     job->cards = stack_.cards();
   else
@@ -1239,7 +1254,8 @@ void MainWindow::run_print(bool all)
             break;
           const Card& c = job->cards[static_cast<size_t>(idx)];
           const double y = i * (card_h + gap);
-          draw_print_card(cr, ctx, 0, y, pw, card_h, c.index, c.body);
+          draw_print_card(cr, ctx, 0, y, pw, card_h, c.index, c.body, job->family,
+                          job->size_pt, job->weight);
         }
       });
   try {
@@ -1307,6 +1323,28 @@ void MainWindow::on_restore()
     return;
   }
   card_face_.restore();
+}
+
+void MainWindow::apply_appearance()
+{
+  card_face_.apply_appearance(settings_.font_family, settings_.font_size,
+                              settings_.font_weight, settings_.palette);
+  card_tabs_above_.set_appearance(settings_.font_family, settings_.font_size,
+                                  settings_.palette);
+  card_tabs_below_.set_appearance(settings_.font_family, settings_.font_size,
+                                  settings_.palette);
+  if (in_card_view_) {
+    card_tabs_above_.bind(stack_, CardView::Side::Before);
+    card_tabs_below_.bind(stack_, CardView::Side::After);
+  }
+}
+
+void MainWindow::on_font()
+{
+  ensure_user_fonts();
+  FontDialog dlg(*this, settings_, [this]() { apply_appearance(); });
+  if (dlg.run() == Gtk::RESPONSE_OK)
+    persist();
 }
 
 void MainWindow::on_not_yet(const Glib::ustring& feature)

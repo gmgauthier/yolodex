@@ -13,7 +13,7 @@ Address Book stays a later, separate app (columns + vCard). YOLO-dex is notes on
 
 ## Status (2026-09-11)
 
-**M4 in tree.** Stacked Card view (Cairo index tabs + the same card face). View is remembered in the ini.
+**M5 in tree.** Appearance dialog (Read-O-Matic controls). Index/title is always bold. Palettes persist in `[topic]` of the ini.
 
 ## 1. Locked decisions
 
@@ -195,13 +195,13 @@ Restore last file + last card id from `~/.config/yolodex/yolodex.ini`. If cheap,
 
 Print / Print All. Card-face chrome. Cut/Copy/Paste/Undo via the TextView buffer. `Card → Restore` = revert current card to last saved snapshot. Confirm Delete. (List hover/left-pin landed with M1.)
 
-### M4 — Card view (this slice)
+### M4 — Card view
 
 `View → Card`: hide the list, show Cairo tab cascade + the same `CardFace`. Click tab to select. Wheel / PgUp / PgDn walk. Remember view in ini. List view remains the editing workhorse.
 
-### M5 — Small extras still in v1
+### M5 — Small extras still in v1 (this slice)
 
-Status `List — n cards` / `Card — i of n`. Optional: body font via a tiny Options → Appearance if it stays a half-day; otherwise park.
+Status `List — n cards` / `Card — i of n` already shipped. Options → Appearance matches Read-O-Matic (family, size, weight from Pango + `~/.local/share/fonts`, three palettes). Card title/index is always bold. Persist in `[topic]` of the ini.
 
 ### M6 — Package
 

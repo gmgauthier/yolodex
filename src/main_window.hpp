@@ -61,6 +61,8 @@ class MainWindow : public Gtk::Window {
   void on_copy();
   void on_paste();
   void on_restore();
+  void apply_appearance();
+  void on_font();
 
   void on_new();
   void on_open();

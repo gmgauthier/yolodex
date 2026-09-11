@@ -6,6 +6,7 @@
 
 #include <gtkmm.h>
 
+#include <string>
 #include <vector>
 
 namespace yolodex {
@@ -17,6 +18,7 @@ class CardView : public Gtk::DrawingArea {
   CardView();
 
   void bind(const Stack& stack, Side side);
+  void set_appearance(const std::string& family, int size_pt, int palette);
 
   sigc::signal<void, int>& signal_card_chosen() { return signal_card_chosen_; }
   sigc::signal<void, int>& signal_step() { return signal_step_; }
@@ -45,6 +47,11 @@ class CardView : public Gtk::DrawingArea {
   int hover_id_ = -1;
   int x_base_ = 0;
   Side side_ = Side::Before;
+  std::string font_family_ = "Sans";
+  int font_size_ = 11;
+  int palette_ = 1;
+  int tab_h_ = 22;
+  int y_step_ = 18;
   sigc::signal<void, int> signal_card_chosen_;
   sigc::signal<void, int> signal_step_;
 };

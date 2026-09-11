@@ -7,8 +7,6 @@
 namespace yolodex {
 namespace {
 
-constexpr int kTabH = 22;
-constexpr int kYStep = 18;
 constexpr int kXStep = 10;
 constexpr int kPad = 8;
 constexpr int kMaxTabs = 12;
@@ -22,6 +20,22 @@ CardView::CardView()
   add_events(Gdk::BUTTON_PRESS_MASK | Gdk::POINTER_MOTION_MASK | Gdk::LEAVE_NOTIFY_MASK |
              Gdk::SCROLL_MASK | Gdk::SMOOTH_SCROLL_MASK);
   set_size_request(-1, 0);
+}
+
+void CardView::set_appearance(const std::string& family, int size_pt, int palette)
+{
+  font_family_ = family.empty() ? "Sans" : family;
+  font_size_ = std::max(8, std::min(size_pt, 32));
+  palette_ = palette;
+  tab_h_ = std::max(22, font_size_ + 12);
+  y_step_ = tab_h_ - 4;
+  const int shown = static_cast<int>(tabs_.size());
+  int h = 0;
+  if (shown > 0)
+    h = kPad * 2 + tab_h_ + (shown - 1) * y_step_;
+  set_size_request(-1, h);
+  queue_resize();
+  queue_draw();
 }
 
 void CardView::bind(const Stack& stack, Side side)
@@ -65,7 +79,7 @@ void CardView::bind(const Stack& stack, Side side)
   const int shown = static_cast<int>(tabs_.size());
   int h = 0;
   if (shown > 0)
-    h = kPad * 2 + kTabH + (shown - 1) * kYStep;
+    h = kPad * 2 + tab_h_ + (shown - 1) * y_step_;
   set_size_request(-1, h);
   hover_id_ = -1;
   queue_resize();
@@ -78,9 +92,9 @@ void CardView::layout_tabs()
   const int n = static_cast<int>(tabs_.size());
   for (int k = 0; k < n; ++k) {
     const int x = kPad + (x_base_ + k) * kXStep;
-    const int y = kPad + k * kYStep;
+    const int y = kPad + k * y_step_;
     const int tw = std::max(40, w - x - kPad);
-    tabs_[static_cast<size_t>(k)].rect = Gdk::Rectangle(x, y, tw, kTabH);
+    tabs_[static_cast<size_t>(k)].rect = Gdk::Rectangle(x, y, tw, tab_h_);
   }
 }
 
@@ -102,28 +116,50 @@ void CardView::draw_tab(const Cairo::RefPtr<Cairo::Context>& cr, const Tab& tab,
   const double y = tab.rect.get_y();
   const double w = tab.rect.get_width();
   const double h = tab.rect.get_height();
-  if (hover)
-    cr->set_source_rgb(0.769, 0.769, 0.737);
-  else if (near_face)
-    cr->set_source_rgb(0.969, 0.961, 0.937);
-  else
-    cr->set_source_rgb(0.910, 0.894, 0.847);
+  if (palette_ == 2) {
+    if (hover)
+      cr->set_source_rgb(0.25, 0.25, 0.25);
+    else if (near_face)
+      cr->set_source_rgb(0.067, 0.067, 0.067);
+    else
+      cr->set_source_rgb(0.165, 0.165, 0.165);
+  } else if (palette_ == 0) {
+    if (hover)
+      cr->set_source_rgb(0.769, 0.769, 0.737);
+    else if (near_face)
+      cr->set_source_rgb(1.0, 1.0, 1.0);
+    else
+      cr->set_source_rgb(0.910, 0.910, 0.910);
+  } else {
+    if (hover)
+      cr->set_source_rgb(0.769, 0.769, 0.737);
+    else if (near_face)
+      cr->set_source_rgb(0.969, 0.961, 0.937);
+    else
+      cr->set_source_rgb(0.910, 0.894, 0.847);
+  }
   cr->rectangle(x, y, w, h);
   cr->fill();
-  cr->set_source_rgb(0.25, 0.25, 0.25);
+  if (palette_ == 2)
+    cr->set_source_rgb(0.847, 0.847, 0.847);
+  else
+    cr->set_source_rgb(0.25, 0.25, 0.25);
   cr->set_line_width(1.0);
   cr->rectangle(x + 0.5, y + 0.5, w - 1.0, h - 1.0);
   cr->stroke();
 
   auto layout = create_pango_layout(tab.index);
   Pango::FontDescription desc;
-  desc.set_family("Sans");
+  desc.set_family(font_family_);
   desc.set_weight(Pango::WEIGHT_BOLD);
-  desc.set_size(11 * Pango::SCALE);
+  desc.set_size(font_size_ * Pango::SCALE);
   layout->set_font_description(desc);
   layout->set_ellipsize(Pango::ELLIPSIZE_END);
   layout->set_width(static_cast<int>((w - 16) * Pango::SCALE));
-  cr->set_source_rgb(0, 0, 0);
+  if (palette_ == 2)
+    cr->set_source_rgb(0.847, 0.847, 0.847);
+  else
+    cr->set_source_rgb(0, 0, 0);
   cr->move_to(x + 8, y + 4);
   layout->show_in_cairo_context(cr);
 }
@@ -131,7 +167,10 @@ void CardView::draw_tab(const Cairo::RefPtr<Cairo::Context>& cr, const Tab& tab,
 bool CardView::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
   const Gtk::Allocation alloc = get_allocation();
-  cr->set_source_rgb(0.902, 0.902, 0.882);
+  if (palette_ == 2)
+    cr->set_source_rgb(0.2, 0.2, 0.2);
+  else
+    cr->set_source_rgb(0.902, 0.902, 0.882);
   cr->rectangle(0, 0, alloc.get_width(), alloc.get_height());
   cr->fill();
   layout_tabs();

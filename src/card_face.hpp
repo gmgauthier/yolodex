@@ -27,6 +27,7 @@ class CardFace : public Gtk::Box {
   bool can_undo() const;
   void restore();
   bool undo();
+  void apply_appearance(const std::string& family, int size_pt, int weight, int palette);
 
   Gtk::TextView& body_view() { return body_; }
   Gtk::Entry& index_entry() { return index_; }
@@ -61,6 +62,7 @@ class CardFace : public Gtk::Box {
   Snap restore_;
   Snap prev_;
   std::vector<Snap> undo_;
+  Glib::RefPtr<Gtk::CssProvider> chrome_css_;
 };
 
 }  // namespace yolodex

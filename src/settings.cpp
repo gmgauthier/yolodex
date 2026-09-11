@@ -71,6 +71,18 @@ void Settings::load()
   const std::string v = get_str(kf, "session", "view");
   if (!v.empty())
     view = v;
+  const std::string fam = get_str(kf, "topic", "font_family");
+  if (!fam.empty())
+    font_family = fam;
+  font_size = get_int(kf, "topic", "font_size", font_size);
+  if (font_size < 8)
+    font_size = 8;
+  if (font_size > 32)
+    font_size = 32;
+  font_weight = get_int(kf, "topic", "font_weight", font_weight);
+  palette = get_int(kf, "topic", "palette", palette);
+  if (palette < 0 || palette > 2)
+    palette = 1;
 }
 
 void Settings::save() const
@@ -86,6 +98,10 @@ void Settings::save() const
   kf.set_integer("session", "card_id", last_id);
   kf.set_double("session", "scroll", last_scroll);
   kf.set_string("session", "view", view);
+  kf.set_string("topic", "font_family", font_family);
+  kf.set_integer("topic", "font_size", font_size);
+  kf.set_integer("topic", "font_weight", font_weight);
+  kf.set_integer("topic", "palette", palette);
   try {
     kf.save_to_file(config_path());
   } catch (const Glib::Error&) {

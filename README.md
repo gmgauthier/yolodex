@@ -10,7 +10,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**M4 in tree.** List view plus stacked **Card** view (View → Card / Shift+F5). Find, print, and last-stack restore are in. Packaging is M6.
+**M5 in tree.** Appearance (family/size/weight, three palettes, fonts from `~/.local/share/fonts`). Card title stays bold. Packaging is M6.
 
 | Doc | What |
 |---|---|
@@ -19,7 +19,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 ## Build
 
 ```
-sudo apt install build-essential meson ninja-build pkg-config g++ libgtkmm-3.0-dev libxml2-dev
+sudo apt install build-essential meson ninja-build pkg-config g++ libgtkmm-3.0-dev libxml2-dev libfontconfig1-dev
 meson setup build
 meson compile -C build
 ./build/yolodex

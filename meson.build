@@ -13,6 +13,7 @@ project(
 
 gtkmm = dependency('gtkmm-3.0')
 libxml = dependency('libxml-2.0')
+fontconfig = dependency('fontconfig')
 
 conf = configuration_data()
 conf.set_quoted('VERSION', meson.project_version())
@@ -39,8 +40,9 @@ executable(
   'src/stack.cpp',
   'src/settings.cpp',
   'src/find_dialog.cpp',
+  'src/font_dialog.cpp',
   include_directories: inc,
-  dependencies: [gtkmm, libxml],
+  dependencies: [gtkmm, libxml, fontconfig],
   install: true,
   install_dir: get_option('bindir'),
 )

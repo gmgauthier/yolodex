@@ -2,6 +2,9 @@
 
 #include "card_face.hpp"
 
+#include <algorithm>
+#include <cstdio>
+
 namespace yolodex {
 
 CardFace::CardFace() : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0)
@@ -231,6 +234,119 @@ bool CardFace::undo()
   signal_index_changed_.emit();
   signal_body_changed_.emit();
   return true;
+}
+
+void CardFace::apply_appearance(const std::string& family, int size_pt, int weight, int palette)
+{
+  const char* body_bg = "#F7F5EF";
+  const char* body_fg = "#1A1A1A";
+  const char* head_bg = "#E8E4D8";
+  const char* head_fg = "#000000";
+  const char* hit_bg = "#404040";
+  const char* hit_fg = "#FFFFFF";
+  const char* sel_bg = "#3D6AA8";
+  const char* sel_fg = "#FFFFFF";
+  if (palette == 0) {
+    body_bg = "#FFFFFF";
+    body_fg = "#000000";
+    head_bg = "#E8E8E8";
+    head_fg = "#000000";
+  } else if (palette == 2) {
+    body_bg = "#111111";
+    body_fg = "#D8D8D8";
+    head_bg = "#1A1A1A";
+    head_fg = "#D8D8D8";
+    hit_bg = "#C8C8C8";
+    hit_fg = "#111111";
+    sel_bg = "#8CB4E8";
+    sel_fg = "#111111";
+  }
+
+  const int sz = std::max(8, std::min(size_pt, 32));
+  const std::string fam = family.empty() ? std::string("Serif") : family;
+
+  Pango::FontDescription body_desc;
+  body_desc.set_family(fam);
+  body_desc.set_size(sz * Pango::SCALE);
+  body_desc.set_weight(static_cast<Pango::Weight>(weight));
+  body_.override_font(body_desc);
+
+  Pango::FontDescription idx_desc = body_desc;
+  idx_desc.set_weight(Pango::WEIGHT_BOLD);
+  index_.override_font(idx_desc);
+
+  std::string fam_css = "\"";
+  for (char c : fam) {
+    if (c == '"' || c == '\\')
+      fam_css += '\\';
+    fam_css += c;
+  }
+  fam_css += "\"";
+
+  char css[1536];
+  std::snprintf(css, sizeof(css),
+                ".yolodex-card {\n"
+                "  background-color: %s;\n"
+                "}\n"
+                ".yolodex-card-index,\n"
+                ".yolodex-card-index entry {\n"
+                "  background-color: %s;\n"
+                "  color: %s;\n"
+                "  font-family: %s;\n"
+                "  font-size: %dpt;\n"
+                "  font-weight: bold;\n"
+                "}\n"
+                ".yolodex-card-body,\n"
+                ".yolodex-card-body text {\n"
+                "  background-color: %s;\n"
+                "  color: %s;\n"
+                "  font-family: %s;\n"
+                "  font-size: %dpt;\n"
+                "  font-weight: %d;\n"
+                "}\n"
+                ".yolodex-card-body text selection,\n"
+                "textview.yolodex-card-body text selection {\n"
+                "  background-color: %s;\n"
+                "  color: %s;\n"
+                "}\n",
+                body_bg, head_bg, head_fg, fam_css.c_str(), sz, body_bg, body_fg, fam_css.c_str(),
+                sz, weight, sel_bg, sel_fg);
+
+  if (!chrome_css_) {
+    chrome_css_ = Gtk::CssProvider::create();
+    inner_.get_style_context()->add_provider(chrome_css_,
+                                             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 50);
+    index_.get_style_context()->add_provider(chrome_css_,
+                                             GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 50);
+    body_.get_style_context()->add_provider(chrome_css_,
+                                            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 50);
+    Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), chrome_css_,
+                                               GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 50);
+  }
+  try {
+    chrome_css_->load_from_data(css);
+  } catch (const Glib::Error&) {
+  }
+
+  Gdk::RGBA bg_rgba, fg_rgba, hbg, hfg, sbg, sfg;
+  bg_rgba.set(body_bg);
+  fg_rgba.set(body_fg);
+  hbg.set(head_bg);
+  hfg.set(head_fg);
+  sbg.set(sel_bg);
+  sfg.set(sel_fg);
+  inner_.override_background_color(bg_rgba);
+  body_.override_background_color(bg_rgba);
+  body_.override_color(fg_rgba);
+  body_.override_background_color(sbg, Gtk::STATE_FLAG_SELECTED);
+  body_.override_color(sfg, Gtk::STATE_FLAG_SELECTED);
+  index_.override_background_color(hbg);
+  index_.override_color(hfg);
+
+  if (auto t = body_buf_->get_tag_table()->lookup("find-hit")) {
+    t->property_background() = hit_bg;
+    t->property_foreground() = hit_fg;
+  }
 }
 
 }  // namespace yolodex
