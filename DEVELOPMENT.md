@@ -13,7 +13,7 @@ Address Book stays a later, separate app (columns + vCard). YOLO-dex is notes on
 
 ## Status (2026-09-11)
 
-**M5 in tree.** Appearance dialog (Read-O-Matic controls). Index/title is always bold. Palettes persist in `[topic]` of the ini.
+**M6 in tree.** Packaging: `debian/`, `scripts/release.sh`, `INSTALL.md`. Tag `v0.1.0`.
 
 ## 1. Locked decisions
 
@@ -199,11 +199,11 @@ Print / Print All. Card-face chrome. Cut/Copy/Paste/Undo via the TextView buffer
 
 `View → Card`: hide the list, show Cairo tab cascade + the same `CardFace`. Click tab to select. Wheel / PgUp / PgDn walk. Remember view in ini. List view remains the editing workhorse.
 
-### M5 — Small extras still in v1 (this slice)
+### M5 — Small extras still in v1
 
 Status `List — n cards` / `Card — i of n` already shipped. Options → Appearance matches Read-O-Matic (family, size, weight from Pango + `~/.local/share/fonts`, three palettes). Card title/index is always bold. Persist in `[topic]` of the ini.
 
-### M6 — Package
+### M6 — Package (this slice)
 
 `debian/` native 3.0 Meson dh, `scripts/release.sh` (tarball + `.deb`; AppImage if linuxdeploy is there — do not block the release on AppImage). `INSTALL.md`. LCOS VM screenshots in README. Tag `v0.1.0`. Push origin + github. Attach `.deb` + tarball.
 

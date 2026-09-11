@@ -10,7 +10,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**M5 in tree.** Appearance (family/size/weight, three palettes, fonts from `~/.local/share/fonts`). Card title stays bold. Packaging is M6.
+**v0.1.0 (M0–M6).** Cardfile-shaped index-card stack: List and Card views, Find, print, Appearance, `.deb` + source tarball. See [INSTALL.md](INSTALL.md).
 
 | Doc | What |
 |---|---|
@@ -24,6 +24,8 @@ meson setup build
 meson compile -C build
 ./build/yolodex
 ```
+
+Install: [INSTALL.md](INSTALL.md).
 
 ## License
 
