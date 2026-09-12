@@ -9,7 +9,7 @@ Repos: https://gitea.scriptorium/gmgauthier/yolodex (origin), https://github.com
 
 Reference window: `brand/ui-reference.svg`
 
-Address Book stays a later, separate app (columns + vCard). YOLO-dex is notes on cards.
+People records live in Ephemeris Contacts. YOLO-dex is notes on cards, not a rolodex.
 
 ## Status (2026-09-11)
 
@@ -214,7 +214,7 @@ Status `List — n cards` / `Card — i of n` already shipped. Options → Appea
 - Merge two stacks
 - Import classic `.crd`
 - Markdown, checkboxes, tags, notebooks
-- Address Book / vCard (separate backlog app)
+- vCard / phone-book fields (people records are Ephemeris Contacts)
 - Sync, cloud, multiple windows of the same file
 - Manual drag-reorder
 - “Library” of stacks
