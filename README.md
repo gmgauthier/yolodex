@@ -20,7 +20,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**v0.1.0 (M0–M6).** Cardfile-shaped index-card stack: List and Card views, Find, print, Appearance, `.deb` + source tarball. See [INSTALL.md](INSTALL.md).
+**v0.1.1.** Cardfile-shaped index-card stack: List and Card views, Find, print, Appearance. See [INSTALL.md](INSTALL.md).
 
 | Doc | What |
 |---|---|
