@@ -14,7 +14,10 @@ class FindDialog : public Gtk::Dialog {
   void set_query(const Glib::ustring& text);
   void present_find();
 
-  sigc::signal<void>& signal_find_next() { return signal_find_next_; }
+  sigc::signal<void>& signal_find_next()
+  {
+    return signal_find_next_;
+  }
 
  private:
   Gtk::Box box_{Gtk::ORIENTATION_HORIZONTAL, 8};
