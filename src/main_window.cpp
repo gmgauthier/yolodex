@@ -25,10 +25,8 @@ Gtk::Separator* toolbar_sep()
   return sep;
 }
 
-void paint_nav_cell(Gtk::CellRenderer* cell,
-                    const Gtk::TreeModel::Path& path,
-                    const Gtk::TreeModel::Path& current,
-                    const Gtk::TreeModel::Path& hover)
+void paint_nav_cell(Gtk::CellRenderer* cell, const Gtk::TreeModel::Path& path,
+                    const Gtk::TreeModel::Path& current, const Gtk::TreeModel::Path& hover)
 {
   if (!cell)
     return;
@@ -55,8 +53,8 @@ bool nav_motion(Gtk::TreeView& view, Gtk::TreeModel::Path& hover, GdkEventMotion
   Gtk::TreeModel::Path path;
   Gtk::TreeViewColumn* col = nullptr;
   int cx = 0, cy = 0, bx = 0, by = 0;
-  view.convert_widget_to_bin_window_coords(static_cast<int>(event->x),
-                                           static_cast<int>(event->y), bx, by);
+  view.convert_widget_to_bin_window_coords(static_cast<int>(event->x), static_cast<int>(event->y),
+                                           bx, by);
   if (view.get_path_at_pos(bx, by, path, col, cx, cy) && path.size() > 0) {
     if (hover.size() == 0 || hover != path) {
       hover = path;
@@ -98,10 +96,9 @@ bool u_find(const Glib::ustring& hay, const Glib::ustring& needle, int from, int
 }
 
 void draw_print_card(const Cairo::RefPtr<Cairo::Context>& cr,
-                     const Glib::RefPtr<Gtk::PrintContext>& ctx, double x, double y,
-                     double w, double h, const Glib::ustring& index,
-                     const Glib::ustring& body, const std::string& family, int size_pt,
-                     int weight)
+                     const Glib::RefPtr<Gtk::PrintContext>& ctx, double x, double y, double w,
+                     double h, const Glib::ustring& index, const Glib::ustring& body,
+                     const std::string& family, int size_pt, int weight)
 {
   const double header = std::min(26.0, std::max(18.0, h * 0.16));
   cr->save();
@@ -199,8 +196,8 @@ void MainWindow::load_css()
   try {
     auto css = Gtk::CssProvider::create();
     css->load_from_path(css_path);
-    Gtk::StyleContext::add_provider_for_screen(
-        Gdk::Screen::get_default(), css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    Gtk::StyleContext::add_provider_for_screen(Gdk::Screen::get_default(), css,
+                                               GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   } catch (const Glib::Error& e) {
     std::cerr << "yolodex: CSS: " << e.what() << "\n";
   }
@@ -227,8 +224,7 @@ void MainWindow::build_menu()
   };
 
   auto* file = Gtk::manage(new Gtk::Menu());
-  add_item(*file, "_New", sigc::mem_fun(*this, &MainWindow::on_new), GDK_KEY_n,
-           Gdk::CONTROL_MASK);
+  add_item(*file, "_New", sigc::mem_fun(*this, &MainWindow::on_new), GDK_KEY_n, Gdk::CONTROL_MASK);
   add_item(*file, "_Open…", sigc::mem_fun(*this, &MainWindow::on_open), GDK_KEY_o,
            Gdk::CONTROL_MASK);
   add_item(*file, "_Save", sigc::mem_fun(*this, &MainWindow::on_save), GDK_KEY_s,
@@ -269,10 +265,8 @@ void MainWindow::build_menu()
   add_item(*card, "Du_plicate", sigc::mem_fun(*this, &MainWindow::on_duplicate));
   add_item(*card, "_Index…", sigc::mem_fun(*this, &MainWindow::on_index_dialog));
   card->append(*Gtk::manage(new Gtk::SeparatorMenuItem()));
-  add_item(*card, "_Previous",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::step_card), -1));
-  add_item(*card, "_Next",
-           sigc::bind(sigc::mem_fun(*this, &MainWindow::step_card), 1));
+  add_item(*card, "_Previous", sigc::bind(sigc::mem_fun(*this, &MainWindow::step_card), -1));
+  add_item(*card, "_Next", sigc::bind(sigc::mem_fun(*this, &MainWindow::step_card), 1));
   add_menu("_Card", *card);
 
   auto* search = Gtk::manage(new Gtk::Menu());
@@ -280,8 +274,8 @@ void MainWindow::build_menu()
            Gdk::CONTROL_MASK);
   add_item(*search, "_Find…", sigc::mem_fun(*this, &MainWindow::on_find), GDK_KEY_f,
            Gdk::CONTROL_MASK);
-  add_item(*search, "Find _Next", sigc::mem_fun(*this, &MainWindow::on_find_next),
-           GDK_KEY_F3, Gdk::ModifierType(0));
+  add_item(*search, "Find _Next", sigc::mem_fun(*this, &MainWindow::on_find_next), GDK_KEY_F3,
+           Gdk::ModifierType(0));
   add_menu("_Search", *search);
 
   auto* options = Gtk::manage(new Gtk::Menu());
@@ -339,26 +333,23 @@ void MainWindow::build_body()
       }
     }
   }
-  list_view_.add_events(Gdk::POINTER_MOTION_MASK | Gdk::LEAVE_NOTIFY_MASK |
-                        Gdk::BUTTON_PRESS_MASK);
-  list_view_.signal_motion_notify_event().connect(
-      sigc::mem_fun(*this, &MainWindow::on_list_motion), false);
-  list_view_.signal_leave_notify_event().connect(
-      sigc::mem_fun(*this, &MainWindow::on_list_leave), false);
-  list_view_.signal_button_press_event().connect(
-      sigc::mem_fun(*this, &MainWindow::on_list_button), false);
-  list_view_.signal_key_press_event().connect(
-      sigc::mem_fun(*this, &MainWindow::on_list_key), false);
+  list_view_.add_events(Gdk::POINTER_MOTION_MASK | Gdk::LEAVE_NOTIFY_MASK | Gdk::BUTTON_PRESS_MASK);
+  list_view_.signal_motion_notify_event().connect(sigc::mem_fun(*this, &MainWindow::on_list_motion),
+                                                  false);
+  list_view_.signal_leave_notify_event().connect(sigc::mem_fun(*this, &MainWindow::on_list_leave),
+                                                 false);
+  list_view_.signal_button_press_event().connect(sigc::mem_fun(*this, &MainWindow::on_list_button),
+                                                 false);
+  list_view_.signal_key_press_event().connect(sigc::mem_fun(*this, &MainWindow::on_list_key),
+                                              false);
 
   list_scroll_.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
   list_scroll_.set_margin_start(4);
   list_scroll_.add(list_view_);
   keep_nav_left();
 
-  card_face_.signal_index_changed().connect(
-      sigc::mem_fun(*this, &MainWindow::on_index_changed));
-  card_face_.signal_body_changed().connect(
-      sigc::mem_fun(*this, &MainWindow::on_body_changed));
+  card_face_.signal_index_changed().connect(sigc::mem_fun(*this, &MainWindow::on_index_changed));
+  card_face_.signal_body_changed().connect(sigc::mem_fun(*this, &MainWindow::on_body_changed));
 
   auto hook_tabs = [this](CardView& tabs) {
     tabs.set_no_show_all(true);
@@ -438,8 +429,7 @@ void MainWindow::keep_nav_left()
         },
         Glib::PRIORITY_LOW);
   });
-  list_view_.signal_size_allocate().connect(
-      [this, v, s](Gtk::Allocation&) { snap_nav_left(); });
+  list_view_.signal_size_allocate().connect([this, v, s](Gtk::Allocation&) { snap_nav_left(); });
   list_view_.signal_cursor_changed().connect([this, v, s]() { snap_nav_left(); });
   list_scroll_.property_hadjustment().signal_changed().connect([hook]() { hook(); });
 }
@@ -613,8 +603,7 @@ bool MainWindow::confirm_discard()
   if (!stack_.is_open() || !stack_.dirty())
     return true;
 
-  Gtk::MessageDialog dlg(*this,
-                         "Save changes to " + stack_.display_name() + "?", false,
+  Gtk::MessageDialog dlg(*this, "Save changes to " + stack_.display_name() + "?", false,
                          Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_NONE, true);
   dlg.set_title("YOLO-dex");
   dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
@@ -630,8 +619,7 @@ bool MainWindow::confirm_discard()
 std::string MainWindow::ensure_suffix(const std::string& path) const
 {
   const std::string suf = ".yolodex";
-  if (path.size() >= suf.size() &&
-      path.compare(path.size() - suf.size(), suf.size(), suf) == 0)
+  if (path.size() >= suf.size() && path.compare(path.size() - suf.size(), suf.size(), suf) == 0)
     return path;
   return path + suf;
 }
@@ -776,8 +764,8 @@ void MainWindow::on_delete_card()
   Glib::ustring name = card_face_.index();
   if (name.empty())
     name = "Untitled";
-  Gtk::MessageDialog dlg(*this, "Delete card \"" + name + "\"?", false,
-                         Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_NONE, true);
+  Gtk::MessageDialog dlg(*this, "Delete card \"" + name + "\"?", false, Gtk::MESSAGE_QUESTION,
+                         Gtk::BUTTONS_NONE, true);
   dlg.set_title("YOLO-dex");
   dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
   dlg.add_button("_Delete", Gtk::RESPONSE_ACCEPT);
@@ -1235,37 +1223,34 @@ void MainWindow::run_print(bool all)
   auto op = Gtk::PrintOperation::create();
   op->set_job_name(stack_.display_name());
   op->set_embed_page_setup(true);
-  op->signal_begin_print().connect(
-      [op, job](const Glib::RefPtr<Gtk::PrintContext>&) {
-        int n = 1;
-        if (job->all) {
-          n = static_cast<int>(
-              std::ceil(static_cast<double>(job->cards.size()) / job->per_page));
-          if (n < 1)
-            n = 1;
-        }
-        op->set_n_pages(n);
-      });
-  op->signal_draw_page().connect(
-      [job](const Glib::RefPtr<Gtk::PrintContext>& ctx, int page) {
-        auto cr = ctx->get_cairo_context();
-        const double pw = ctx->get_width();
-        const double ph = ctx->get_height();
-        const double gap = 10.0;
-        const int per = job->per_page;
-        const double card_h = (ph - gap * (per - 1)) / per;
-        const int start = job->all ? page * per : 0;
-        const int n = job->all ? per : 1;
-        for (int i = 0; i < n; ++i) {
-          const int idx = start + i;
-          if (idx < 0 || idx >= static_cast<int>(job->cards.size()))
-            break;
-          const Card& c = job->cards[static_cast<size_t>(idx)];
-          const double y = i * (card_h + gap);
-          draw_print_card(cr, ctx, 0, y, pw, card_h, c.index, c.body, job->family,
-                          job->size_pt, job->weight);
-        }
-      });
+  op->signal_begin_print().connect([op, job](const Glib::RefPtr<Gtk::PrintContext>&) {
+    int n = 1;
+    if (job->all) {
+      n = static_cast<int>(std::ceil(static_cast<double>(job->cards.size()) / job->per_page));
+      if (n < 1)
+        n = 1;
+    }
+    op->set_n_pages(n);
+  });
+  op->signal_draw_page().connect([job](const Glib::RefPtr<Gtk::PrintContext>& ctx, int page) {
+    auto cr = ctx->get_cairo_context();
+    const double pw = ctx->get_width();
+    const double ph = ctx->get_height();
+    const double gap = 10.0;
+    const int per = job->per_page;
+    const double card_h = (ph - gap * (per - 1)) / per;
+    const int start = job->all ? page * per : 0;
+    const int n = job->all ? per : 1;
+    for (int i = 0; i < n; ++i) {
+      const int idx = start + i;
+      if (idx < 0 || idx >= static_cast<int>(job->cards.size()))
+        break;
+      const Card& c = job->cards[static_cast<size_t>(idx)];
+      const double y = i * (card_h + gap);
+      draw_print_card(cr, ctx, 0, y, pw, card_h, c.index, c.body, job->family, job->size_pt,
+                      job->weight);
+    }
+  });
   try {
     const auto result = op->run(Gtk::PRINT_OPERATION_ACTION_PRINT_DIALOG, *this);
     if (result == Gtk::PRINT_OPERATION_RESULT_APPLY)
@@ -1335,12 +1320,10 @@ void MainWindow::on_restore()
 
 void MainWindow::apply_appearance()
 {
-  card_face_.apply_appearance(settings_.font_family, settings_.font_size,
-                              settings_.font_weight, settings_.palette);
-  card_tabs_above_.set_appearance(settings_.font_family, settings_.font_size,
-                                  settings_.palette);
-  card_tabs_below_.set_appearance(settings_.font_family, settings_.font_size,
-                                  settings_.palette);
+  card_face_.apply_appearance(settings_.font_family, settings_.font_size, settings_.font_weight,
+                              settings_.palette);
+  card_tabs_above_.set_appearance(settings_.font_family, settings_.font_size, settings_.palette);
+  card_tabs_below_.set_appearance(settings_.font_family, settings_.font_size, settings_.palette);
   if (in_card_view_) {
     card_tabs_above_.bind(stack_, CardView::Side::Before);
     card_tabs_below_.bind(stack_, CardView::Side::After);

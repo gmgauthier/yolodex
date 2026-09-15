@@ -17,18 +17,42 @@ struct Card {
 
 class Stack {
  public:
-  bool is_open() const { return open_; }
-  bool dirty() const { return dirty_; }
-  bool empty() const { return cards_.empty(); }
-  const std::string& path() const { return path_; }
-  const std::string& error() const { return error_; }
+  bool is_open() const
+  {
+    return open_;
+  }
+  bool dirty() const
+  {
+    return dirty_;
+  }
+  bool empty() const
+  {
+    return cards_.empty();
+  }
+  const std::string& path() const
+  {
+    return path_;
+  }
+  const std::string& error() const
+  {
+    return error_;
+  }
 
   std::string display_name() const;
-  int count() const { return static_cast<int>(cards_.size()); }
-  int selected_row() const { return selected_row_; }
+  int count() const
+  {
+    return static_cast<int>(cards_.size());
+  }
+  int selected_row() const
+  {
+    return selected_row_;
+  }
   int selected_id() const;
 
-  const std::vector<Card>& cards() const { return cards_; }
+  const std::vector<Card>& cards() const
+  {
+    return cards_;
+  }
   Card* selected();
   const Card* selected() const;
 

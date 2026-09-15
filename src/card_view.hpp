@@ -20,8 +20,14 @@ class CardView : public Gtk::DrawingArea {
   void bind(const Stack& stack, Side side);
   void set_appearance(const std::string& family, int size_pt, int palette);
 
-  sigc::signal<void, int>& signal_card_chosen() { return signal_card_chosen_; }
-  sigc::signal<void, int>& signal_step() { return signal_step_; }
+  sigc::signal<void, int>& signal_card_chosen()
+  {
+    return signal_card_chosen_;
+  }
+  sigc::signal<void, int>& signal_step()
+  {
+    return signal_step_;
+  }
 
  protected:
   bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr) override;

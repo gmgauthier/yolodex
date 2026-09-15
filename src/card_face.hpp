@@ -29,11 +29,23 @@ class CardFace : public Gtk::Box {
   bool undo();
   void apply_appearance(const std::string& family, int size_pt, int weight, int palette);
 
-  Gtk::TextView& body_view() { return body_; }
-  Gtk::Entry& index_entry() { return index_; }
+  Gtk::TextView& body_view()
+  {
+    return body_;
+  }
+  Gtk::Entry& index_entry()
+  {
+    return index_;
+  }
 
-  sigc::signal<void>& signal_index_changed() { return signal_index_changed_; }
-  sigc::signal<void>& signal_body_changed() { return signal_body_changed_; }
+  sigc::signal<void>& signal_index_changed()
+  {
+    return signal_index_changed_;
+  }
+  sigc::signal<void>& signal_body_changed()
+  {
+    return signal_body_changed_;
+  }
 
  private:
   void on_index_activate();

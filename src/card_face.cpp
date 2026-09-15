@@ -7,7 +7,8 @@
 
 namespace yolodex {
 
-CardFace::CardFace() : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0)
+CardFace::CardFace()
+    : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0)
 {
   set_border_width(8);
 
@@ -19,8 +20,7 @@ CardFace::CardFace() : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 0)
   index_.set_margin_start(2);
   index_.set_margin_end(2);
   index_.signal_activate().connect(sigc::mem_fun(*this, &CardFace::on_index_activate));
-  index_.signal_focus_out_event().connect(
-      sigc::mem_fun(*this, &CardFace::on_index_focus_out));
+  index_.signal_focus_out_event().connect(sigc::mem_fun(*this, &CardFace::on_index_focus_out));
   index_.signal_changed().connect(sigc::mem_fun(*this, &CardFace::on_index_edited));
 
   body_buf_ = Gtk::TextBuffer::create();
