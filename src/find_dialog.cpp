@@ -4,7 +4,8 @@
 
 namespace yolodex {
 
-FindDialog::FindDialog(Gtk::Window& parent) : Gtk::Dialog("Find", parent, false)
+FindDialog::FindDialog(Gtk::Window& parent)
+    : Gtk::Dialog("Find", parent, false)
 {
   set_modal(false);
   set_skip_taskbar_hint(true);
