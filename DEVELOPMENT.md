@@ -225,7 +225,7 @@ Status `List — n cards` / `Card — i of n` already shipped. Options → Appea
 - Becoming CherryTree (trees, rich text, attachments)
 - Hard-cloning 39/440 character limits
 - Custom title bar
-- Overriding `GTK_THEME`; use `prefer_light_theme` only
+- Overriding `GTK_THEME` when it is already set. Unset: Clearlooks-Phenix, then Clearlooks, then Adwaita:light (`prefer_light_theme`)
 - Horizontal scroll on the index list (Read-O-Matic Contents)
 - Dangling refs in realize/map lambdas (capture pointers)
 - Shipping AppImage as a release gate
