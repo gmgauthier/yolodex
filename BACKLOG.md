@@ -1,6 +1,6 @@
 # YOLO-dex backlog
 
-Current release: **v0.1.1**. Last updated: 2026-09-15.
+Current release: **v0.1.2**. Last updated: 2026-09-16.
 
 Windows 3.x / 95 Cardfile. Notes on cards, not a people database. Binary `yolodex`. Suite catalog: `lcos-projects/PRODUCT-BACKLOG.md`. Plan: [DEVELOPMENT.md](DEVELOPMENT.md). How to land work: [DEVELOPMENT.md](DEVELOPMENT.md#process) — `feature/` / `fix/` branches, PRs to `master`, lint gate, semver on shipped PRs.
 
