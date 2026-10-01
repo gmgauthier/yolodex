@@ -1,6 +1,6 @@
 # YOLO-dex backlog
 
-Current release: **v0.1.2**. Last updated: 2026-09-16.
+Current release: **v0.1.3**. Last updated: 2026-10-01.
 
 Windows 3.x / 95 Cardfile. Notes on cards, not a people database. Binary `yolodex`. Suite catalog: `lcos-projects/PRODUCT-BACKLOG.md`. Plan: [DEVELOPMENT.md](DEVELOPMENT.md). How to land work: [DEVELOPMENT.md](DEVELOPMENT.md#process) — `feature/` / `fix/` branches, PRs to `master`, lint gate, semver on shipped PRs.
 
@@ -28,6 +28,8 @@ Nothing queued. v1 (M0–M6) is tagged. Parked work lives under Low Priority.
 - Custom title bar; Bryan’s seal
 
 ## Shipped
+
+**v0.1.3** — Headless meson test suite, and known defects recorded in BUG-BACKLOG.md.
 
 **v0.1.0 (M0–M6)** — List + Card views; one `.yolodex` XML file; Add / Delete / Duplicate; Find / Find Next / Go To; Print / Print All; Appearance palettes; last file + card restore. Config: `~/.config/yolodex/`.
 
