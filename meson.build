@@ -67,3 +67,12 @@ install_data(
   rename: 'yolodex.svg',
   install_dir: get_option('datadir') / 'icons' / 'hicolor' / 'scalable' / 'apps',
 )
+
+yolodex_tests = executable(
+  'yolodex-tests',
+  'tests/test_stack.cpp',
+  'src/stack.cpp',
+  include_directories: inc,
+  dependencies: [gtkmm, libxml],
+)
+test('stack', yolodex_tests)
