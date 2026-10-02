@@ -60,8 +60,15 @@ void Settings::load()
   } catch (const Glib::Error&) {
     return;
   }
-  window_x = get_int(kf, "window", "x", window_x);
-  window_y = get_int(kf, "window", "y", window_y);
+  try {
+    has_position = kf.has_key("window", "x") && kf.has_key("window", "y");
+  } catch (const Glib::Error&) {
+    has_position = false;
+  }
+  if (has_position) {
+    window_x = get_int(kf, "window", "x", window_x);
+    window_y = get_int(kf, "window", "y", window_y);
+  }
   window_w = get_int(kf, "window", "width", window_w);
   window_h = get_int(kf, "window", "height", window_h);
   paned = get_int(kf, "window", "paned", paned);
@@ -89,8 +96,10 @@ void Settings::save() const
 {
   g_mkdir_with_parents(config_dir().c_str(), 0700);
   Glib::KeyFile kf;
-  kf.set_integer("window", "x", window_x);
-  kf.set_integer("window", "y", window_y);
+  if (has_position) {
+    kf.set_integer("window", "x", window_x);
+    kf.set_integer("window", "y", window_y);
+  }
   kf.set_integer("window", "width", window_w);
   kf.set_integer("window", "height", window_h);
   kf.set_integer("window", "paned", paned);

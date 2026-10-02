@@ -153,7 +153,7 @@ MainWindow::MainWindow()
 
   if (settings_.window_w > 0 && settings_.window_h > 0)
     resize(settings_.window_w, settings_.window_h);
-  if (settings_.window_x >= 0 && settings_.window_y >= 0)
+  if (settings_.has_position)
     move(settings_.window_x, settings_.window_y);
   if (settings_.paned > 40)
     paned_.set_position(settings_.paned);
@@ -810,6 +810,7 @@ void MainWindow::persist()
   int x = 0, y = 0, w = 0, h = 0;
   get_position(x, y);
   get_size(w, h);
+  settings_.has_position = true;
   settings_.window_x = x;
   settings_.window_y = y;
   settings_.window_w = w;
