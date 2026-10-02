@@ -2,17 +2,9 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), and `tests/test_find.cpp` (`find`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in, and that hit offsets and lengths count characters of the original text when casefolding grows a character (`ß`, `ﬁ`, `İ`). Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
+`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), `tests/test_find.cpp` (`find`), and `tests/test_card_face.cpp` (`card_face`, needs a display and is skipped without one, e.g. `xvfb-run meson test`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in, and that hit offsets and lengths count characters of the original text when casefolding grows a character (`ß`, `ﬁ`, `İ`). `card_face` checks that an unchanged index from Card → Index keeps Undo and Restore, and a changed one is an undoable edit. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
 
 ## Open
-
-### Card → Index → OK clears undo even when the index did not change
-
-- Severity: incorrect
-- Confidence: high
-- Where: `src/main_window.cpp:807`, `src/main_window.cpp:575`, `src/card_face.cpp:189`
-- Trigger: Edit the body so Undo and Restore are available. Card → Index, press OK, including OK with the index unchanged. Cancel does not do this.
-- Outcome: `refresh` calls `bind_face`, which calls `take_restore_point`. That captures the current text as the restore baseline and clears the undo stack. Edit → Undo does nothing. Edit → Restore reports that the card is already restored. The pre-dialog body cannot be put back.
 
 ### A window position left of or above the origin is saved and then ignored
 
@@ -27,6 +19,15 @@ Reviewed 2026-10-01 against the 0.1.2 sources.
 None.
 
 ## Closed
+
+### Card → Index → OK clears undo even when the index did not change
+
+- Severity: incorrect
+- Confidence: high
+- Where: `src/main_window.cpp:807`, `src/main_window.cpp:575`, `src/card_face.cpp:189`
+- Trigger: Edit the body so Undo and Restore are available. Card → Index, press OK, including OK with the index unchanged. Cancel does not do this.
+- Outcome: `refresh` calls `bind_face`, which calls `take_restore_point`. That captures the current text as the restore baseline and clears the undo stack. Edit → Undo does nothing. Edit → Restore reports that the card is already restored. The pre-dialog body cannot be put back.
+- Fixed in v0.1.9: OK with an unchanged index does nothing. A changed index is applied as an ordinary edit: Undo puts the old index back, earlier edits stay undoable, and Restore still returns to the text the card was opened with. The card list is refreshed without rebinding the face.
 
 ### Find applies casefold offsets to the original text
 
