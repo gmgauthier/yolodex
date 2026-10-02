@@ -1,3 +1,9 @@
+yolodex (0.1.5-1) unstable; urgency=medium
+
+  * Keep a stack readable when a card holds a control character.
+
+ -- Greg Gauthier <gmgauthier@protonmail.com>  Fri, 02 Oct 2026 11:00:36 +0100
+
 yolodex (0.1.4-1) unstable; urgency=medium
 
   * Confirm before Save As replaces the suffixed file.

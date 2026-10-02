@@ -1,6 +1,6 @@
 # YOLO-dex backlog
 
-Current release: **v0.1.4**. Last updated: 2026-10-02.
+Current release: **v0.1.5**. Last updated: 2026-10-02.
 
 Windows 3.x / 95 Cardfile. Notes on cards, not a people database. Binary `yolodex`. Suite catalog: `lcos-projects/PRODUCT-BACKLOG.md`. Plan: [DEVELOPMENT.md](DEVELOPMENT.md). How to land work: [DEVELOPMENT.md](DEVELOPMENT.md#process) — `feature/` / `fix/` branches, PRs to `master`, lint gate, semver on shipped PRs.
 
@@ -28,6 +28,8 @@ Nothing queued. v1 (M0–M6) is tagged. Parked work lives under Low Priority.
 - Custom title bar; Bryan’s seal
 
 ## Shipped
+
+**v0.1.5** — A control character in a card no longer makes the saved stack refuse to open.
 
 **v0.1.4** — Save As asks before replacing an existing .yolodex file it appended the suffix to.
 
