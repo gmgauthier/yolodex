@@ -2,17 +2,9 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), and `tests/test_find.cpp` (`find`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
+`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), and `tests/test_find.cpp` (`find`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in, and that hit offsets and lengths count characters of the original text when casefolding grows a character (`ß`, `ﬁ`, `İ`). Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
 
 ## Open
-
-### Find applies casefold offsets to the original text
-
-- Severity: incorrect
-- Confidence: high
-- Where: `src/main_window.cpp:85`, `src/main_window.cpp:955`, `src/card_face.cpp:118`
-- Trigger: Search for `ss` in a body `Straße`. `ß`, `ﬁ`, and `İ` all grow under `casefold()`.
-- Outcome: `u_find` returns an offset into the casefolded string. The hit length is `needle.casefold().size()`. `show_find_hit` applies both to the original buffer with `get_iter_at_offset`. For `Straße` / `ss` the highlight covers `ße`, not `ß`. Resume stays in casefold space, so a later real match can be skipped or land past the end of the buffer. ASCII queries are unaffected.
 
 ### Card → Index → OK clears undo even when the index did not change
 
@@ -35,6 +27,15 @@ Reviewed 2026-10-01 against the 0.1.2 sources.
 None.
 
 ## Closed
+
+### Find applies casefold offsets to the original text
+
+- Severity: incorrect
+- Confidence: high
+- Where: `src/main_window.cpp:85`, `src/main_window.cpp:955`, `src/card_face.cpp:118`
+- Trigger: Search for `ss` in a body `Straße`. `ß`, `ﬁ`, and `İ` all grow under `casefold()`.
+- Outcome: `u_find` returns an offset into the casefolded string. The hit length is `needle.casefold().size()`. `show_find_hit` applies both to the original buffer with `get_iter_at_offset`. For `Straße` / `ss` the highlight covers `ße`, not `ß`. Resume stays in casefold space, so a later real match can be skipped or land past the end of the buffer. ASCII queries are unaffected.
+- Fixed in v0.1.8: Find folds the text one character at a time and maps each hit back to the original characters. `ss` in `Straße` highlights `ß`, later matches keep their real offsets, and resume continues from an original offset.
 
 ### Find Next never rescans the front of the field it resumed in
 

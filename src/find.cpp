@@ -2,24 +2,45 @@
 
 #include "find.hpp"
 
+#include <vector>
+
 namespace yolodex {
 
 bool find_in_text(const Glib::ustring& hay, const Glib::ustring& needle, int from, int& start,
                   int& length)
 {
-  if (needle.empty())
-    return false;
-  const Glib::ustring h = hay.casefold();
   const Glib::ustring n = needle.casefold();
+  if (n.empty())
+    return false;
   if (from < 0)
     from = 0;
-  if (static_cast<Glib::ustring::size_type>(from) > h.size())
+  if (static_cast<Glib::ustring::size_type>(from) > hay.size())
     return false;
-  const auto pos = h.find(n, static_cast<Glib::ustring::size_type>(from));
+  /* Fold one character at a time and remember which original character each
+   * folded character came from. "ß" -> "ss", "ﬁ" -> "fi", "İ" -> "i̇" grow,
+   * so offsets in the folded string are not offsets in hay. */
+  Glib::ustring folded;
+  std::vector<int> origin;
+  origin.reserve(hay.size() + 8);
+  int index = 0;
+  int folded_from = -1;
+  for (auto it = hay.begin(); it != hay.end(); ++it, ++index) {
+    if (index == from)
+      folded_from = static_cast<int>(folded.size());
+    const Glib::ustring f = Glib::ustring(1, *it).casefold();
+    folded += f;
+    for (Glib::ustring::size_type k = 0; k < f.size(); ++k)
+      origin.push_back(index);
+  }
+  if (folded_from < 0)
+    folded_from = static_cast<int>(folded.size());
+  const auto pos = folded.find(n, static_cast<Glib::ustring::size_type>(folded_from));
   if (pos == Glib::ustring::npos)
     return false;
-  start = static_cast<int>(pos);
-  length = static_cast<int>(n.size());
+  const int first = origin[pos];
+  const int last = origin[pos + n.size() - 1];
+  start = first;
+  length = last - first + 1;
   return true;
 }
 
