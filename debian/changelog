@@ -1,3 +1,9 @@
+yolodex (0.1.7-1) unstable; urgency=medium
+
+  * Let Find Next wrap back to the front of the field it resumed in.
+
+ -- Greg Gauthier <gmgauthier@protonmail.com>  Fri, 02 Oct 2026 11:04:56 +0100
+
 yolodex (0.1.6-1) unstable; urgency=medium
 
   * Give every loaded card its own id.
