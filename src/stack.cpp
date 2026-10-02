@@ -15,12 +15,34 @@
 namespace yolodex {
 namespace {
 
+/* XML 1.0 Char production. Anything else (VT, FF, other C0 controls,
+ * U+FFFE/U+FFFF) cannot be written even as a character reference, and one
+ * such byte makes the whole file unreadable. */
+bool xml_char_ok(gunichar ch)
+{
+  return ch == 0x9 || ch == 0xA || ch == 0xD || (ch >= 0x20 && ch <= 0xD7FF) ||
+         (ch >= 0xE000 && ch <= 0xFFFD) || (ch >= 0x10000 && ch <= 0x10FFFF);
+}
+
 std::string xml_escape(const Glib::ustring& in)
 {
   std::string out;
   out.reserve(in.bytes() + 8);
-  for (const char c : in.raw()) {
-    switch (c) {
+  const std::string& raw = in.raw();
+  const char* p = raw.c_str();
+  const char* end = p + raw.size();
+  while (p < end) {
+    const gunichar ch = g_utf8_get_char_validated(p, end - p);
+    if (ch == static_cast<gunichar>(-1) || ch == static_cast<gunichar>(-2)) {
+      ++p; /* invalid byte: drop it */
+      continue;
+    }
+    const char* next = g_utf8_next_char(p);
+    if (!xml_char_ok(ch)) {
+      p = next;
+      continue;
+    }
+    switch (ch) {
       case '&':
         out += "&amp;";
         break;
@@ -31,9 +53,10 @@ std::string xml_escape(const Glib::ustring& in)
         out += "&gt;";
         break;
       default:
-        out += c;
+        out.append(p, next);
         break;
     }
+    p = next;
   }
   return out;
 }
@@ -307,6 +330,13 @@ bool Stack::open(const std::string& path)
 {
   error_.clear();
   xmlDoc* doc = xmlReadFile(path.c_str(), nullptr, XML_PARSE_NONET | XML_PARSE_NOBLANKS);
+  if (!doc) {
+    /* Older builds wrote illegal control characters into card text. Recover
+     * those stacks instead of locking every card away. */
+    doc = xmlReadFile(path.c_str(), nullptr,
+                      XML_PARSE_NONET | XML_PARSE_NOBLANKS | XML_PARSE_RECOVER | XML_PARSE_NOERROR |
+                          XML_PARSE_NOWARNING);
+  }
   if (!doc) {
     error_ = "Not a YOLO-dex stack.";
     return false;
