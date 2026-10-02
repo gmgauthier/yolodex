@@ -4,6 +4,7 @@
 #include "check.hpp"
 
 #include <cstdlib>
+#include <fstream>
 #include <string>
 #include <unistd.h>
 
@@ -61,5 +62,45 @@ int main()
   CHECK(loaded.empty());
 
   std::remove(path.c_str());
+
+  {
+    /* XML 1.0 illegal controls (VT, FF, other C0) must not make the saved
+     * stack unreadable. Tab, LF, and CR survive. */
+    yolodex::Stack s;
+    s.create_new();
+    s.commit(Glib::ustring("Ctl\x0B" "Index"), Glib::ustring("a\tb\nc\x0C" "d\x01" "e"));
+    const int other = s.add();
+    CHECK(other > 0);
+    s.commit("Plain", "kept");
+    const std::string p2 =
+        "/tmp/yolodex-ctl-" + std::to_string(static_cast<long long>(getpid())) + ".yolodex";
+    CHECK(s.save_as(p2));
+    yolodex::Stack back;
+    CHECK(back.open(p2));
+    CHECK(back.count() == 2);
+    CHECK(back.cards()[0].index == "CtlIndex");
+    CHECK(back.cards()[0].body == "a\tb\ncde");
+    CHECK(back.cards()[1].index == "Plain");
+    CHECK(back.cards()[1].body == "kept");
+    std::remove(p2.c_str());
+  }
+
+  {
+    /* A stack already saved with a raw control byte still opens. */
+    const std::string p3 =
+        "/tmp/yolodex-raw-" + std::to_string(static_cast<long long>(getpid())) + ".yolodex";
+    {
+      std::ofstream out(p3, std::ios::binary);
+      out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<yolodex version=\"1\">\n"
+          << "  <card id=\"1\">\n    <index>Bad\x0Bone</index>\n    <body>x</body>\n  </card>\n"
+          << "  <card id=\"2\">\n    <index>Good</index>\n    <body>y</body>\n  </card>\n"
+          << "</yolodex>\n";
+    }
+    yolodex::Stack raw;
+    CHECK(raw.open(p3));
+    CHECK(raw.count() == 2);
+    std::remove(p3.c_str());
+  }
+
   return suite_test::done("stack");
 }

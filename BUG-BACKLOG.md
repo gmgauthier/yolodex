@@ -2,17 +2,9 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`) and `tests/test_save_path.cpp` (`save_path`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. Open defects below are not locked by a test until they are fixed. Duplicate ids in a hand-edited file are kept on purpose by the loader; the defect is what a later edit does with them.
+`meson test` runs `tests/test_stack.cpp` (`stack`) and `tests/test_save_path.cpp` (`save_path`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. Open defects below are not locked by a test until they are fixed. Duplicate ids in a hand-edited file are kept on purpose by the loader; the defect is what a later edit does with them.
 
 ## Open
-
-### A control character in a card makes the saved stack refuse to open
-
-- Severity: data-loss
-- Confidence: high
-- Where: `src/stack.cpp:18`, `src/stack.cpp:309`
-- Trigger: An index or body contains an XML 1.0 illegal control, such as U+000B. Tab, LF, and CR are legal. VT, FF, and the other C0 controls are not.
-- Outcome: `xml_escape` passes the byte through. `save` / `save_as` still return true. `open` uses `xmlReadFile` without `XML_PARSE_RECOVER`, so the next open fails with "Not a YOLO-dex stack." Every card in that file is unreachable.
 
 ### Duplicate card ids send later edits to the other card
 
@@ -59,6 +51,15 @@ Reviewed 2026-10-01 against the 0.1.2 sources.
 None.
 
 ## Closed
+
+### A control character in a card makes the saved stack refuse to open
+
+- Severity: data-loss
+- Confidence: high
+- Where: `src/stack.cpp:18`, `src/stack.cpp:309`
+- Trigger: An index or body contains an XML 1.0 illegal control, such as U+000B. Tab, LF, and CR are legal. VT, FF, and the other C0 controls are not.
+- Outcome: `xml_escape` passes the byte through. `save` / `save_as` still return true. `open` uses `xmlReadFile` without `XML_PARSE_RECOVER`, so the next open fails with "Not a YOLO-dex stack." Every card in that file is unreachable.
+- Fixed in v0.1.5: Characters XML 1.0 cannot hold (VT, FF, the other C0 controls, U+FFFE/U+FFFF) are left out when a stack is written; tab, LF, and CR stay. A stack an older build already wrote with such a byte opens through libxml2's recover mode, so its cards are reachable again.
 
 ### Save As appends `.yolodex` after the overwrite check
 
