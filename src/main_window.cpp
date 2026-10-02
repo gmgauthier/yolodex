@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Unlicense */
 
 #include "main_window.hpp"
+#include "save_path.hpp"
 #include "about_dialog.hpp"
 #include "font_dialog.hpp"
 #include "paths.hpp"
@@ -616,14 +617,6 @@ bool MainWindow::confirm_discard()
   return resp == Gtk::RESPONSE_REJECT;
 }
 
-std::string MainWindow::ensure_suffix(const std::string& path) const
-{
-  const std::string suf = ".yolodex";
-  if (path.size() >= suf.size() && path.compare(path.size() - suf.size(), suf.size(), suf) == 0)
-    return path;
-  return path + suf;
-}
-
 std::string MainWindow::samples_dir() const
 {
   const std::string p = std::string(SOURCE_ROOT) + "/data/samples";
@@ -675,8 +668,22 @@ bool MainWindow::do_save_as()
   }
   if (dlg.run() != Gtk::RESPONSE_ACCEPT)
     return false;
-  const std::string path = ensure_suffix(dlg.get_filename());
+  const std::string chosen = dlg.get_filename();
+  const std::string path = with_stack_suffix(chosen);
   dlg.hide();
+  if (save_needs_overwrite_prompt(chosen, path)) {
+    /* The chooser confirmed the typed name, not the suffixed file it becomes. */
+    Gtk::MessageDialog ask(*this,
+                           "A file named \"" + Glib::filename_display_basename(path) +
+                               "\" already exists. Do you want to replace it?",
+                           false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_NONE, true);
+    ask.set_title("YOLO-dex");
+    ask.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+    ask.add_button("_Replace", Gtk::RESPONSE_ACCEPT);
+    ask.set_default_response(Gtk::RESPONSE_CANCEL);
+    if (ask.run() != Gtk::RESPONSE_ACCEPT)
+      return false;
+  }
   if (!stack_.save_as(path)) {
     show_error(stack_.error().empty() ? "Could not save." : stack_.error());
     return false;
