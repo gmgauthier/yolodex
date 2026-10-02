@@ -1,6 +1,6 @@
 # YOLO-dex backlog
 
-Current release: **v0.1.7**. Last updated: 2026-10-02.
+Current release: **v0.1.8**. Last updated: 2026-10-02.
 
 Windows 3.x / 95 Cardfile. Notes on cards, not a people database. Binary `yolodex`. Suite catalog: `lcos-projects/PRODUCT-BACKLOG.md`. Plan: [DEVELOPMENT.md](DEVELOPMENT.md). How to land work: [DEVELOPMENT.md](DEVELOPMENT.md#process) — `feature/` / `fix/` branches, PRs to `master`, lint gate, semver on shipped PRs.
 
@@ -28,6 +28,8 @@ Nothing queued. v1 (M0–M6) is tagged. Parked work lives under Low Priority.
 - Custom title bar; Bryan’s seal
 
 ## Shipped
+
+**v0.1.8** — Find highlights the right text when the card contains ß, ﬁ, or İ.
 
 **v0.1.7** — Find Next wraps to an earlier match in the same field instead of reporting Not found.
 
