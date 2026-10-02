@@ -2,17 +2,9 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`) and `tests/test_save_path.cpp` (`save_path`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. Open defects below are not locked by a test until they are fixed. Duplicate ids in a hand-edited file are kept on purpose by the loader; the defect is what a later edit does with them.
+`meson test` runs `tests/test_stack.cpp` (`stack`) and `tests/test_save_path.cpp` (`save_path`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
 
 ## Open
-
-### Duplicate card ids send later edits to the other card
-
-- Severity: data-loss
-- Confidence: high
-- Where: `src/stack.cpp:339`, `src/stack.cpp:151`, `src/stack.cpp:208`
-- Trigger: Open a stack whose first card has a missing or non-positive id and a later card is `id="1"`. Or two cards that already share an id. Arrow to the second of those cards and edit it.
-- Outcome: A missing id is assigned `max_id + 1` in file order, so it can land on an id that a later card already has. `row_of_id` returns the first match. `commit` writes the text onto the card you edited, then `select_id` moves the selection to the other card and does not rebind the face. The face still shows the card you were editing. The next keystroke, Undo, or Save commits that text onto the other card. If `max_id + 1` is not positive, `next_id_` is forced back to 1 (`src/stack.cpp:350`), so Add creates another card with id 1.
 
 ### Find Next never rescans the front of the field it resumed in
 
@@ -51,6 +43,15 @@ Reviewed 2026-10-01 against the 0.1.2 sources.
 None.
 
 ## Closed
+
+### Duplicate card ids send later edits to the other card
+
+- Severity: data-loss
+- Confidence: high
+- Where: `src/stack.cpp:339`, `src/stack.cpp:151`, `src/stack.cpp:208`
+- Trigger: Open a stack whose first card has a missing or non-positive id and a later card is `id="1"`. Or two cards that already share an id. Arrow to the second of those cards and edit it.
+- Outcome: A missing id is assigned `max_id + 1` in file order, so it can land on an id that a later card already has. `row_of_id` returns the first match. `commit` writes the text onto the card you edited, then `select_id` moves the selection to the other card and does not rebind the face. The face still shows the card you were editing. The next keystroke, Undo, or Save commits that text onto the other card. If `max_id + 1` is not positive, `next_id_` is forced back to 1 (`src/stack.cpp:350`), so Add creates another card with id 1.
+- Fixed in v0.1.6: Open keeps each id that is unique in the file and gives a missing, non-positive, or repeated id a new one past the largest id. Edits and selection stay on the card being edited. Add and Duplicate skip ids in use and never wrap to an id that exists, including after an id of 2147483647.
 
 ### A control character in a card makes the saved stack refuse to open
 
