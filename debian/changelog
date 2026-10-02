@@ -1,3 +1,9 @@
+yolodex (0.1.8-1) unstable; urgency=medium
+
+  * Map Find hits back to the original text after casefolding.
+
+ -- Greg Gauthier <gmgauthier@protonmail.com>  Fri, 02 Oct 2026 11:06:57 +0100
+
 yolodex (0.1.7-1) unstable; urgency=medium
 
   * Let Find Next wrap back to the front of the field it resumed in.
