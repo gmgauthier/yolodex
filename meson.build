@@ -1,7 +1,7 @@
 project(
   'yolodex',
   'cpp',
-  version: '0.1.6',
+  version: '0.1.7',
   license: 'Unlicense',
   meson_version: '>=0.56',
   default_options: [
@@ -39,6 +39,7 @@ executable(
   'src/card_view.cpp',
   'src/stack.cpp',
   'src/save_path.cpp',
+  'src/find.cpp',
   'src/settings.cpp',
   'src/find_dialog.cpp',
   'src/font_dialog.cpp',
@@ -85,3 +86,12 @@ save_path_tests = executable(
   include_directories: inc,
 )
 test('save_path', save_path_tests)
+
+find_tests = executable(
+  'yolodex-find-tests',
+  'tests/test_find.cpp',
+  'src/find.cpp',
+  include_directories: inc,
+  dependencies: [gtkmm],
+)
+test('find', find_tests)

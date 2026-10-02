@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Unlicense */
 
 #include "main_window.hpp"
+#include "find.hpp"
 #include "save_path.hpp"
 #include "about_dialog.hpp"
 #include "font_dialog.hpp"
@@ -77,23 +78,6 @@ bool nav_leave(Gtk::TreeView& view, Gtk::TreeModel::Path& hover, GdkEventCrossin
     view.queue_draw();
   }
   return false;
-}
-
-bool u_find(const Glib::ustring& hay, const Glib::ustring& needle, int from, int& out)
-{
-  if (needle.empty())
-    return false;
-  const Glib::ustring h = hay.casefold();
-  const Glib::ustring n = needle.casefold();
-  if (from < 0)
-    from = 0;
-  if (static_cast<Glib::ustring::size_type>(from) > h.size())
-    return false;
-  const auto pos = h.find(n, static_cast<Glib::ustring::size_type>(from));
-  if (pos == Glib::ustring::npos)
-    return false;
-  out = static_cast<int>(pos);
-  return true;
 }
 
 void draw_print_card(const Cairo::RefPtr<Cairo::Context>& cr,
@@ -959,7 +943,6 @@ bool MainWindow::run_find(const Glib::ustring& query, bool resume)
   const Glib::ustring needle = query.casefold();
   if (needle.empty())
     return false;
-  const int nlen = static_cast<int>(needle.size());
   const int n = stack_.count();
   int row = stack_.selected_row();
   if (row < 0)
@@ -979,28 +962,19 @@ bool MainWindow::run_find(const Glib::ustring& query, bool resume)
     off = last_hit_offset_ + last_hit_length_;
   }
   last_query_ = query;
-  const int slots = n * 2;
-  const int start_slot = row * 2 + field;
-  for (int i = 0; i < slots; ++i) {
-    const int s = (start_slot + i) % slots;
-    const int r = s / 2;
-    const int f = s % 2;
-    const int from = (i == 0) ? off : 0;
-    const Card& c = stack_.cards()[static_cast<size_t>(r)];
-    const Glib::ustring& hay = f == 0 ? c.index : c.body;
-    int found = 0;
-    if (!u_find(hay, query, from, found))
-      continue;
+  FindHit hit;
+  if (find_in_cards(stack_.cards(), query, row, field, off, hit)) {
+    const Card& c = stack_.cards()[static_cast<size_t>(hit.row)];
     last_hit_id_ = c.id;
-    last_hit_in_index_ = f == 0;
-    last_hit_offset_ = found;
-    last_hit_length_ = nlen;
+    last_hit_in_index_ = hit.in_index;
+    last_hit_offset_ = hit.offset;
+    last_hit_length_ = hit.length;
     const bool same = c.id == stack_.selected_id();
-    stack_.select_row(r);
+    stack_.select_row(hit.row);
     fill_list();
     if (!same)
       bind_face();
-    card_face_.show_find_hit(f == 0, found, nlen);
+    card_face_.show_find_hit(hit.in_index, hit.offset, hit.length);
     update_title();
     update_status();
     return true;
