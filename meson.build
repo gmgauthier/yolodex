@@ -1,7 +1,7 @@
 project(
   'yolodex',
   'cpp',
-  version: '0.1.3',
+  version: '0.1.4',
   license: 'Unlicense',
   meson_version: '>=0.56',
   default_options: [
@@ -38,6 +38,7 @@ executable(
   'src/card_face.cpp',
   'src/card_view.cpp',
   'src/stack.cpp',
+  'src/save_path.cpp',
   'src/settings.cpp',
   'src/find_dialog.cpp',
   'src/font_dialog.cpp',
@@ -76,3 +77,11 @@ yolodex_tests = executable(
   dependencies: [gtkmm, libxml],
 )
 test('stack', yolodex_tests)
+
+save_path_tests = executable(
+  'yolodex-save-path-tests',
+  'tests/test_save_path.cpp',
+  'src/save_path.cpp',
+  include_directories: inc,
+)
+test('save_path', save_path_tests)

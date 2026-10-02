@@ -41,7 +41,6 @@ class MainWindow : public Gtk::Window {
   bool confirm_discard();
   bool do_save();
   bool do_save_as();
-  std::string ensure_suffix(const std::string& path) const;
   std::string samples_dir() const;
   void persist();
   void restore_session();

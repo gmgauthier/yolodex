@@ -2,17 +2,9 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`). It checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip. It does not lock the defects below. Duplicate ids in a hand-edited file are kept on purpose by the loader; the defect is what a later edit does with them.
+`meson test` runs `tests/test_stack.cpp` (`stack`) and `tests/test_save_path.cpp` (`save_path`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. Open defects below are not locked by a test until they are fixed. Duplicate ids in a hand-edited file are kept on purpose by the loader; the defect is what a later edit does with them.
 
 ## Open
-
-### Save As appends `.yolodex` after the overwrite check
-
-- Severity: data-loss
-- Confidence: high
-- Where: `src/main_window.cpp:619`, `src/main_window.cpp:678`
-- Trigger: Save As, type `recipes` while `recipes.yolodex` already exists. Or pick a name that ends in `.YOLODEX`.
-- Outcome: The chooser confirms overwrite of the name the user typed. `ensure_suffix` then appends `.yolodex` unless the path already ends in that exact lowercase suffix. `recipes` becomes `recipes.yolodex` and replaces that file with no confirmation. `Name.YOLODEX` becomes `Name.YOLODEX.yolodex`.
 
 ### A control character in a card makes the saved stack refuse to open
 
@@ -65,3 +57,14 @@ Reviewed 2026-10-01 against the 0.1.2 sources.
 ## Closed
 
 None.
+
+## Closed
+
+### Save As appends `.yolodex` after the overwrite check
+
+- Severity: data-loss
+- Confidence: high
+- Where: `src/main_window.cpp:619`, `src/main_window.cpp:678`
+- Trigger: Save As, type `recipes` while `recipes.yolodex` already exists. Or pick a name that ends in `.YOLODEX`.
+- Outcome: The chooser confirms overwrite of the name the user typed. `ensure_suffix` then appends `.yolodex` unless the path already ends in that exact lowercase suffix. `recipes` becomes `recipes.yolodex` and replaces that file with no confirmation. `Name.YOLODEX` becomes `Name.YOLODEX.yolodex`.
+- Fixed in v0.1.4: `.yolodex` in any letter case counts as the suffix. When appending the suffix lands on a different file that already exists, Save As asks before replacing it; Cancel leaves the file alone.
