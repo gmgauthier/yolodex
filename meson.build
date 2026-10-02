@@ -39,6 +39,7 @@ executable(
   'src/card_view.cpp',
   'src/stack.cpp',
   'src/save_path.cpp',
+  'src/find.cpp',
   'src/settings.cpp',
   'src/find_dialog.cpp',
   'src/font_dialog.cpp',
@@ -85,3 +86,12 @@ save_path_tests = executable(
   include_directories: inc,
 )
 test('save_path', save_path_tests)
+
+find_tests = executable(
+  'yolodex-find-tests',
+  'tests/test_find.cpp',
+  'src/find.cpp',
+  include_directories: inc,
+  dependencies: [gtkmm],
+)
+test('find', find_tests)

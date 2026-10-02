@@ -2,17 +2,9 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`) and `tests/test_save_path.cpp` (`save_path`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
+`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), and `tests/test_find.cpp` (`find`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
 
 ## Open
-
-### Find Next never rescans the front of the field it resumed in
-
-- Severity: incorrect
-- Confidence: high
-- Where: `src/main_window.cpp:972`, `src/main_window.cpp:981`
-- Trigger: One card whose body is `alpha alpha`. Find "alpha", then Find Next, then Find Next again.
-- Outcome: Resume starts at `last_hit_offset_ + last_hit_length_`. Only the first slot of the scan uses that offset. The loop does not visit that same field again from offset 0, so the earlier "alpha" is skipped. Status becomes "Not found." `last_hit_*` is left unchanged (`src/main_window.cpp:1001`), so every later Find Next resumes at the same exhausted offset until the query changes. A match on a later card is still found.
 
 ### Find applies casefold offsets to the original text
 
@@ -43,6 +35,15 @@ Reviewed 2026-10-01 against the 0.1.2 sources.
 None.
 
 ## Closed
+
+### Find Next never rescans the front of the field it resumed in
+
+- Severity: incorrect
+- Confidence: high
+- Where: `src/main_window.cpp:972`, `src/main_window.cpp:981`
+- Trigger: One card whose body is `alpha alpha`. Find "alpha", then Find Next, then Find Next again.
+- Outcome: Resume starts at `last_hit_offset_ + last_hit_length_`. Only the first slot of the scan uses that offset. The loop does not visit that same field again from offset 0, so the earlier "alpha" is skipped. Status becomes "Not found." `last_hit_*` is left unchanged (`src/main_window.cpp:1001`), so every later Find Next resumes at the same exhausted offset until the query changes. A match on a later card is still found.
+- Fixed in v0.1.7: The search (now `src/find.cpp`) scans one more slot after wrapping, so the field it resumed in is searched again from its front. `alpha alpha` cycles 0, 6, 0, and a single match is found again.
 
 ### Duplicate card ids send later edits to the other card
 
