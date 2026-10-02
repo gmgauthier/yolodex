@@ -20,7 +20,7 @@ LCOS itself: [https://github.com/BryanLunduke/LCOS](https://github.com/BryanLund
 
 ## Status
 
-**v0.1.5.** Cardfile-shaped index-card stack: List and Card views, Find, print, Appearance. Headless test suite and BUG-BACKLOG.md. See [INSTALL.md](INSTALL.md).
+**v0.1.6.** Cardfile-shaped index-card stack: List and Card views, Find, print, Appearance. Headless test suite and BUG-BACKLOG.md. See [INSTALL.md](INSTALL.md).
 
 | Doc | What |
 |---|---|

@@ -1,3 +1,9 @@
+yolodex (0.1.6-1) unstable; urgency=medium
+
+  * Give every loaded card its own id.
+
+ -- Greg Gauthier <gmgauthier@protonmail.com>  Fri, 02 Oct 2026 11:02:42 +0100
+
 yolodex (0.1.5-1) unstable; urgency=medium
 
   * Keep a stack readable when a card holds a control character.

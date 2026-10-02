@@ -5,6 +5,7 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <set>
 #include <string>
 #include <unistd.h>
 
@@ -100,6 +101,78 @@ int main()
     CHECK(raw.open(p3));
     CHECK(raw.count() == 2);
     std::remove(p3.c_str());
+  }
+
+  {
+    /* A card with no id before a card with id="1", plus two cards sharing
+     * id 3: every card ends up with its own id, and an edit stays on the
+     * card that was edited. */
+    const std::string p4 =
+        "/tmp/yolodex-dup-" + std::to_string(static_cast<long long>(getpid())) + ".yolodex";
+    {
+      std::ofstream out(p4);
+      out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<yolodex version=\"1\">\n"
+          << "  <card><index>A no id</index><body>a</body></card>\n"
+          << "  <card id=\"1\"><index>B one</index><body>b</body></card>\n"
+          << "  <card id=\"3\"><index>C three</index><body>c</body></card>\n"
+          << "  <card id=\"3\"><index>D three</index><body>d</body></card>\n"
+          << "</yolodex>\n";
+    }
+    yolodex::Stack dup;
+    CHECK(dup.open(p4));
+    CHECK(dup.count() == 4);
+    std::set<int> ids;
+    for (const auto& c : dup.cards())
+      ids.insert(c.id);
+    CHECK(ids.size() == 4);
+    CHECK(*ids.begin() >= 1);
+    /* Ids that were unique in the file are kept. */
+    CHECK(dup.cards()[1].index == "B one");
+    CHECK(dup.cards()[1].id == 1);
+
+    /* Edit the second id-3 card (row 3, "D three"). */
+    CHECK(dup.select_row(3));
+    const int d_id = dup.selected_id();
+    dup.commit("D three", "edited");
+    CHECK(dup.selected_id() == d_id);
+    CHECK(dup.selected()->index == "D three");
+    CHECK(dup.selected()->body == "edited");
+    CHECK(dup.cards()[2].body == "c");
+    /* Re-committing the same text (as the next keystroke would) stays put too. */
+    dup.commit("D three", "edited more");
+    CHECK(dup.cards()[2].body == "c");
+    CHECK(dup.cards()[3].body == "edited more");
+
+    /* Add makes an id nobody has. */
+    const int fresh = dup.add();
+    CHECK(fresh >= 1);
+    CHECK(ids.count(fresh) == 0);
+    std::remove(p4.c_str());
+  }
+
+  {
+    /* An id at INT_MAX must not wrap Add back onto id 1. */
+    const std::string p5 =
+        "/tmp/yolodex-max-" + std::to_string(static_cast<long long>(getpid())) + ".yolodex";
+    {
+      std::ofstream out(p5);
+      out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<yolodex version=\"1\">\n"
+          << "  <card id=\"1\"><index>One</index><body/></card>\n"
+          << "  <card id=\"2147483647\"><index>Max</index><body/></card>\n"
+          << "  <card><index>None</index><body/></card>\n"
+          << "</yolodex>\n";
+    }
+    yolodex::Stack mx;
+    CHECK(mx.open(p5));
+    std::set<int> ids;
+    for (const auto& c : mx.cards())
+      ids.insert(c.id);
+    CHECK(ids.size() == 3);
+    CHECK(*ids.begin() >= 1);
+    const int fresh = mx.add();
+    CHECK(fresh >= 1);
+    CHECK(ids.count(fresh) == 0);
+    std::remove(p5.c_str());
   }
 
   return suite_test::done("stack");

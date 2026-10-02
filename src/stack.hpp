@@ -74,6 +74,8 @@ class Stack {
   void sort_cards();
   int row_of_id(int id) const;
   bool write_file(const std::string& path) const;
+  bool id_in_use(int id) const;
+  int take_fresh_id();
 
   std::vector<Card> cards_;
   std::string path_;

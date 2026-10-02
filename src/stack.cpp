@@ -10,6 +10,8 @@
 #include <glibmm/miscutils.h>
 
 #include <algorithm>
+#include <climits>
+#include <set>
 #include <sstream>
 
 namespace yolodex {
@@ -182,6 +184,20 @@ int Stack::row_of_id(int id) const
   return cards_.empty() ? -1 : 0;
 }
 
+bool Stack::id_in_use(int id) const
+{
+  return std::any_of(cards_.begin(), cards_.end(), [id](const Card& c) { return c.id == id; });
+}
+
+int Stack::take_fresh_id()
+{
+  int id = next_id_ < 1 ? 1 : next_id_;
+  while (id_in_use(id))
+    id = id == INT_MAX ? 1 : id + 1;
+  next_id_ = id == INT_MAX ? 1 : id + 1;
+  return id;
+}
+
 bool Stack::select_id(int id)
 {
   const int row = row_of_id(id);
@@ -236,7 +252,7 @@ int Stack::add()
   if (!open_)
     return -1;
   Card c;
-  c.id = next_id_++;
+  c.id = take_fresh_id();
   cards_.push_back(c);
   dirty_ = true;
   sort_cards();
@@ -250,7 +266,7 @@ int Stack::duplicate_selected()
   if (!src)
     return -1;
   Card c = *src;
-  c.id = next_id_++;
+  c.id = take_fresh_id();
   cards_.push_back(c);
   dirty_ = true;
   sort_cards();
@@ -350,7 +366,6 @@ bool Stack::open(const std::string& path)
   }
 
   std::vector<Card> loaded;
-  int max_id = 0;
   for (xmlNode* n = root->children; n; n = n->next) {
     if (n->type != XML_ELEMENT_NODE || node_name(n) != "card")
       continue;
@@ -366,19 +381,32 @@ bool Stack::open(const std::string& path)
   }
   xmlFreeDoc(doc);
 
+  /* Every card gets its own id: edits, selection, and the card list all find
+   * a card by id. An id unique in the file is kept; a missing, non-positive,
+   * or repeated id gets a new one past the largest id in the file. */
+  int max_id = 0;
+  for (const Card& c : loaded)
+    max_id = std::max(max_id, c.id);
+  std::set<int> seen;
+  auto next_free = [&]() {
+    if (max_id < INT_MAX)
+      return ++max_id;
+    int id = 1;
+    while (seen.count(id) ||
+           std::any_of(loaded.begin(), loaded.end(), [id](const Card& c) { return c.id == id; }))
+      ++id;
+    return id;
+  };
   for (Card& c : loaded) {
-    if (c.id < 1)
-      c.id = max_id + 1;
-    if (c.id > max_id)
-      max_id = c.id;
+    if (c.id < 1 || seen.count(c.id))
+      c.id = next_free();
+    seen.insert(c.id);
   }
   std::sort(loaded.begin(), loaded.end(), index_less);
 
   cards_ = std::move(loaded);
   path_ = path;
-  next_id_ = max_id + 1;
-  if (next_id_ < 1)
-    next_id_ = 1;
+  next_id_ = max_id < INT_MAX ? max_id + 1 : 1;
   selected_row_ = cards_.empty() ? -1 : 0;
   open_ = true;
   dirty_ = false;
