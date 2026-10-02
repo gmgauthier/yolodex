@@ -2,9 +2,17 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), `tests/test_find.cpp` (`find`), and `tests/test_card_face.cpp` (`card_face`, needs a display and is skipped without one, e.g. `xvfb-run meson test`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in, and that hit offsets and lengths count characters of the original text when casefolding grows a character (`ß`, `ﬁ`, `İ`). `card_face` checks that an unchanged index from Card → Index keeps Undo and Restore, and a changed one is an undoable edit. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
+`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), `tests/test_find.cpp` (`find`), `tests/test_card_face.cpp` (`card_face`, needs a display and is skipped without one, e.g. `xvfb-run meson test`), and `tests/test_settings.cpp` (`settings`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in, and that hit offsets and lengths count characters of the original text when casefolding grows a character (`ß`, `ﬁ`, `İ`). `card_face` checks that an unchanged index from Card → Index keeps Undo and Restore, and a changed one is an undoable edit. `settings` checks that negative window coordinates round-trip. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
 
 ## Open
+
+None.
+
+## Closed
+
+None.
+
+## Closed
 
 ### A window position left of or above the origin is saved and then ignored
 
@@ -13,12 +21,7 @@ Reviewed 2026-10-01 against the 0.1.2 sources.
 - Where: `src/main_window.cpp:171`, `src/main_window.cpp:817`
 - Trigger: Place the window on a monitor that sits left of or above the primary origin and quit. `-1, -1` is also the unset sentinel.
 - Outcome: `persist` stores `get_position` as-is. The next launch moves only when both coordinates are `>= 0`. One negative axis drops both, and the window comes back at the default placement.
-
-## Closed
-
-None.
-
-## Closed
+- Fixed in v0.1.10: Whether a position was saved is its own flag (the `x` and `y` keys are present), so negative coordinates are restored. A config with no saved position leaves placement to the window manager.
 
 ### Card → Index → OK clears undo even when the index did not change
 

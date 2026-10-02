@@ -104,3 +104,12 @@ card_face_tests = executable(
   dependencies: [gtkmm],
 )
 test('card_face', card_face_tests)
+
+settings_tests = executable(
+  'yolodex-settings-tests',
+  'tests/test_settings.cpp',
+  'src/settings.cpp',
+  include_directories: inc,
+  dependencies: [gtkmm],
+)
+test('settings', settings_tests)
