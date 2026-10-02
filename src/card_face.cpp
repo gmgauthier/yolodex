@@ -65,6 +65,20 @@ void CardFace::set_index(const Glib::ustring& text)
   suppress_ = false;
 }
 
+bool CardFace::edit_index(const Glib::ustring& text)
+{
+  if (text == index())
+    return false;
+  prev_.index = index();
+  prev_.body = body();
+  push_undo();
+  suppress_ = true;
+  index_.set_text(text);
+  suppress_ = false;
+  prev_.index = text;
+  return true;
+}
+
 Glib::ustring CardFace::index() const
 {
   return index_.get_text();

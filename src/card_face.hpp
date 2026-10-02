@@ -14,6 +14,9 @@ class CardFace : public Gtk::Box {
 
   void set_enabled(bool on);
   void set_index(const Glib::ustring& text);
+  /* Change the index as a user edit (undoable, keeps the restore point).
+   * Returns false if the text is unchanged. */
+  bool edit_index(const Glib::ustring& text);
   Glib::ustring index() const;
   void set_body(const Glib::ustring& text);
   Glib::ustring body() const;

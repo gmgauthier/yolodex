@@ -1,3 +1,9 @@
+yolodex (0.1.9-1) unstable; urgency=medium
+
+  * Keep Undo and Restore across Card > Index > OK.
+
+ -- Greg Gauthier <gmgauthier@protonmail.com>  Fri, 02 Oct 2026 11:15:30 +0100
+
 yolodex (0.1.8-1) unstable; urgency=medium
 
   * Map Find hits back to the original text after casefolding.

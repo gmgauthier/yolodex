@@ -795,9 +795,14 @@ void MainWindow::on_index_dialog()
   dlg.show_all();
   if (dlg.run() != Gtk::RESPONSE_ACCEPT)
     return;
-  card_face_.set_index(entry->get_text());
+  /* An index change is an ordinary edit: keep the undo stack and the restore
+   * point. refresh() would rebind the face and reset both. */
+  if (!card_face_.edit_index(entry->get_text()))
+    return;
   flush_face();
-  refresh();
+  fill_list();
+  update_title();
+  update_status();
 }
 
 void MainWindow::persist()

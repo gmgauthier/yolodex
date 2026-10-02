@@ -1,7 +1,7 @@
 project(
   'yolodex',
   'cpp',
-  version: '0.1.8',
+  version: '0.1.9',
   license: 'Unlicense',
   meson_version: '>=0.56',
   default_options: [
@@ -95,3 +95,12 @@ find_tests = executable(
   dependencies: [gtkmm],
 )
 test('find', find_tests)
+
+card_face_tests = executable(
+  'yolodex-card-face-tests',
+  'tests/test_card_face.cpp',
+  'src/card_face.cpp',
+  include_directories: inc,
+  dependencies: [gtkmm],
+)
+test('card_face', card_face_tests)
