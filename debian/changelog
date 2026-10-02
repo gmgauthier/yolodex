@@ -1,3 +1,9 @@
+yolodex (0.1.10-1) unstable; urgency=medium
+
+  * Restore a saved window position with negative coordinates.
+
+ -- Greg Gauthier <gmgauthier@protonmail.com>  Fri, 02 Oct 2026 11:17:35 +0100
+
 yolodex (0.1.9-1) unstable; urgency=medium
 
   * Keep Undo and Restore across Card > Index > OK.

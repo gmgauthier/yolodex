@@ -1,7 +1,7 @@
 project(
   'yolodex',
   'cpp',
-  version: '0.1.9',
+  version: '0.1.10',
   license: 'Unlicense',
   meson_version: '>=0.56',
   default_options: [
