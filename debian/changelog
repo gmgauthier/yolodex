@@ -1,3 +1,9 @@
+yolodex (0.1.11-1) unstable; urgency=medium
+
+  * One card prints on the full page.
+
+ -- Greg Gauthier <gmgauthier@protonmail.com>  Tue, 06 Oct 2026 22:55:10 +0100
+
 yolodex (0.1.10-1) unstable; urgency=medium
 
   * Restore a saved window position with negative coordinates.
