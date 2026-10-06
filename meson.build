@@ -39,6 +39,7 @@ executable(
   'src/card_view.cpp',
   'src/stack.cpp',
   'src/save_path.cpp',
+  'src/print_layout.cpp',
   'src/find.cpp',
   'src/settings.cpp',
   'src/find_dialog.cpp',
@@ -86,6 +87,14 @@ save_path_tests = executable(
   include_directories: inc,
 )
 test('save_path', save_path_tests)
+
+print_tests = executable(
+  'yolodex-print-tests',
+  'tests/test_print.cpp',
+  'src/print_layout.cpp',
+  include_directories: inc,
+)
+test('print', print_tests)
 
 find_tests = executable(
   'yolodex-find-tests',

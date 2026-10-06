@@ -2,6 +2,7 @@
 
 #include "main_window.hpp"
 #include "find.hpp"
+#include "print_layout.hpp"
 #include "save_path.hpp"
 #include "about_dialog.hpp"
 #include "font_dialog.hpp"
@@ -1206,6 +1207,7 @@ void MainWindow::run_print(bool all)
     job->cards = stack_.cards();
   else
     job->cards.push_back(*stack_.selected());
+  job->per_page = print_slots(static_cast<int>(job->cards.size()));
 
   auto op = Gtk::PrintOperation::create();
   op->set_job_name(stack_.display_name());
@@ -1225,7 +1227,7 @@ void MainWindow::run_print(bool all)
     const double ph = ctx->get_height();
     const double gap = 10.0;
     const int per = job->per_page;
-    const double card_h = (ph - gap * (per - 1)) / per;
+    const double card_h = print_slot_height(ph, gap, per);
     const int start = job->all ? page * per : 0;
     const int n = job->all ? per : 1;
     for (int i = 0; i < n; ++i) {

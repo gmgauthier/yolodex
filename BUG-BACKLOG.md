@@ -2,7 +2,7 @@
 
 Reviewed 2026-10-01 against the 0.1.2 sources.
 
-`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), `tests/test_find.cpp` (`find`), `tests/test_card_face.cpp` (`card_face`, needs a display and is skipped without one, e.g. `xvfb-run meson test`), and `tests/test_settings.cpp` (`settings`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in, and that hit offsets and lengths count characters of the original text when casefolding grows a character (`ß`, `ﬁ`, `İ`). `card_face` checks that an unchanged index from Card → Index keeps Undo and Restore, and a changed one is an undoable edit. `settings` checks that negative window coordinates round-trip. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
+`meson test` runs `tests/test_stack.cpp` (`stack`), `tests/test_save_path.cpp` (`save_path`), `tests/test_find.cpp` (`find`), `tests/test_card_face.cpp` (`card_face`, needs a display and is skipped without one, e.g. `xvfb-run meson test`), and `tests/test_settings.cpp` (`settings`). `stack` checks create, sort, prefix jump, remove, XML escape of `&` and `<`, and save/open round trip, including card text with XML-illegal control characters, and that duplicate or missing ids in a file become unique ids. `save_path` checks that Save As adds `.yolodex` only when no letter case of it is there, and that a suffixed name that already exists needs its own overwrite confirmation. `find` checks that Find Next wraps through the whole stack and back to the front of the field it resumed in, and that hit offsets and lengths count characters of the original text when casefolding grows a character (`ß`, `ﬁ`, `İ`). `card_face` checks that an unchanged index from Card → Index keeps Undo and Restore, and a changed one is an undoable edit. `settings` checks that negative window coordinates round-trip. `print` checks that one card is given the full page height and that more than one card still uses four equal slots. Open defects below are not locked by a test until they are fixed. Since v0.1.6 the loader keeps every id that is unique in the file and gives a missing, non-positive, or repeated id a new one, so a later edit cannot land on another card.
 
 ## Open
 
@@ -10,9 +10,14 @@ None.
 
 ## Closed
 
-None.
+### One card prints in a quarter of the page
 
-## Closed
+- Severity: incorrect
+- Confidence: high
+- Where: `src/main_window.cpp` `run_print`, `draw_print_card`
+- Trigger: Print the selected card. The body is longer than a quarter of the page.
+- Outcome: The job still divides the page into four slots. The card is drawn in the top slot and the body is clipped to that height.
+- Fixed in v0.1.11: A job of one card uses the full page. A job of more than one card still prints four to a page.
 
 ### A window position left of or above the origin is saved and then ignored
 
